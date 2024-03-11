@@ -12,7 +12,7 @@ int main() {
     int nombreEntre = 0;
     int nombreEssais = 0;
     
-    printf("Bienvenue dans le jeu Plus ou Moins!\n");
+    printf("Jeu : Plus ou Moins!\n");
     printf("Devinez le nombre mystère entre 1 et 100.\n");
     
     // Boucle de jeu
