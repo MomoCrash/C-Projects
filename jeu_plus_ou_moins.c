@@ -28,7 +28,7 @@ int main() {
         else if (nombreEntre > nombreMystere) {
             printf("C'est moins !\n");
         }
-        else {
+        else  
             printf("Bravo, vous avez trouvé le nombre mystère en %d essais !\n", nombreEssais);
         }
 
