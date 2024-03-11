@@ -4,11 +4,13 @@
 
 void AskInt(const char* text, int* value, int* min, int* max) {
     int newValue = *value;
-    while (newValue == *value || newValue == -1 || newValue == 0 || newValue > *max || newValue < *min) {
+    while (newValue == *value || newValue == -1 || newValue == 0 || newValue >= *max || newValue <= *min) {
         printf(text, *min, *max);
+        printf("%d", newValue);
         scanf("%d", &newValue);
         if (newValue == 0) {
-            printf("Vous devez mettre un nombre !");
+            printf("Vous devez mettre un nombre ! \n");
+            newValue = -1;
         }
     }
     *value = newValue;
@@ -28,15 +30,15 @@ void CheckAnswer(const int number, const int answer) {
 int main(void) {
 
     srand(time(NULL));
-    
-    int INT_MAX = 999999;
-    int INT_MIN = 0;
+
+    int MAX = 999999;
+    int MIN = 0;
     
     int min;
     int max;
     
-    AskInt("Donnez la borne minimal : ", &min, &INT_MIN, &INT_MAX);
-    AskInt("Donnez la borne maximal : ", &max, &min, &INT_MAX);
+    AskInt("Donnez la borne minimal : ", &min, &MIN, &MAX);
+    AskInt("Donnez la borne maximal : ", &max, &min, &MAX);
     
     int random = min + (rand() % (max-min));
     int anwser = -1;
