@@ -4,13 +4,9 @@
 #include <time.h>
 #include "tools.c"
 
-void AskInt(void){
-    printf("AskInt");
-}
-
 int main() {
     // Initialisation du générateur de nombres aléatoires
-    srand(time(NULL)); // pas compris 
+    srand(time(NULL)); 
     
     // Génération d'un nombre aléatoire entre 1 et 100
     int nombreMystere = rand() % scanf("%d", "%d");
