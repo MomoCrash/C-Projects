@@ -17,8 +17,13 @@ int* ExtendArray(int* oldArray, int extendSize) {
 
 }
 
+int RandomRange(int min, int max) {
+    return (rand() % (max - min + 1)) + min;
+}
+
 void AskInt(const char* text, int* value, int min, int max) {
 
+    char c = '0';
     int error = 0;
     do {
         printf(text);
@@ -27,10 +32,16 @@ void AskInt(const char* text, int* value, int min, int max) {
 
         if (error == 0) {
             printf("Vous devez mettre un nombre ! \n");
+            do {
+                c = getchar();
+            } while (!isdigit(c));
+            ungetc(c, stdin);
+            continue;
         }
         if (*value < min || *value > max) {
             printf("Le nombre est hors des bornes ! \n");
             error = 0;
+            continue;
         }
     } while (error == 0);
 
@@ -70,14 +81,14 @@ int Game(int maxTry) {
     AskInt("Donnez la borne minimal ", &min, 0, INT_MAX);
     AskInt("Donnez la borne maximal ", &max, min, INT_MAX);
 
-    int random =  (rand() % (max - min + 1)) + min;
+    int random =  RandomRange(min, max);
     int answer = -1;
 
     int currentTryCount = 0;
 
     while (1) {
         if (currentTryCount >= maxTry) {
-            printf("Vous n'avez plus d'essais ! PERDU !");
+            printf("Vous n'avez plus d'essais ! PERDU ! \n");
             break;
         }
         AskInt("Donnez un nombre ", &answer, min, max);
