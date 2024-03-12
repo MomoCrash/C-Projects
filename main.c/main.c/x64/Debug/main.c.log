@@ -1,0 +1,7 @@
+﻿  main.c
+C:\Users\mfournier\Documents\GitHub\C-Projects\main.c\main.c\main.c(18,18): warning C4474: 'scanf_s' : trop d'arguments passés pour la chaîne de format
+C:\Users\mfournier\Documents\GitHub\C-Projects\main.c\main.c\main.c(18,18): message : les espaces réservés et leurs paramètres attendent des arguments 0 variadiques, mais des arguments 1 ont été fournis
+C:\Users\mfournier\Documents\GitHub\C-Projects\main.c\main.c\main.c(20,17): warning C4098: 'Replay' : fonction 'void' retournant une valeur
+C:\Users\mfournier\Documents\GitHub\C-Projects\main.c\main.c\main.c(23,17): warning C4098: 'Replay' : fonction 'void' retournant une valeur
+C:\Users\mfournier\Documents\GitHub\C-Projects\main.c\main.c\main.c(35,11): warning C4244: 'fonction' : conversion de 'time_t' en 'unsigned int', perte possible de données
+  main.c.vcxproj -> C:\Users\mfournier\Documents\GitHub\C-Projects\main.c\x64\Debug\main.c.exe

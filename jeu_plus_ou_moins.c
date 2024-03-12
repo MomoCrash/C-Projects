@@ -7,7 +7,7 @@ int main() {
     // Initialisation du générateur de nombres aléatoires
     srand(time(NULL)); 
     
-    // Génération d'un nombre aléatoire entre 1 et 100
+    // Génération d'un nombre aléatoire 
     int nombreMystere = rand() % scanf("%d", "%d");
     int nombreEntre = 0;
     int nombreEssais = 0;
@@ -39,5 +39,5 @@ int main() {
         
     } while (nombreEntre != nombreMystere);
     
-    return 0; // en gros ca veut dire que tout s'est bien passé. (Ok)
+    return 0; //(Ok)
 }

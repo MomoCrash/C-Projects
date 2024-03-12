@@ -3,11 +3,7 @@ void AskInt (const char* text, int* value) {
     scanf("%d", value);
 }
 
-int Replay () {
-    if(Replay == 0) {
-        main();
-    }
-    else {
-        return 1;
-    }
+int replay (const char*, int* value) {
+    
+}
 }
