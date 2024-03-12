@@ -2,25 +2,25 @@
 #include <stdlib.h>
 #include <time.h>
 
-// Déclaration de variables
+// Dï¿½claration de variables
 int nombreEntre = 0;
 int nombreEssais = 0;
 int nombreMaxEssais = 5;
 int borneMinimale = 0;
 int borneMaximale = 0;
 
-// Fonctions pouvant être intégrer dans le tools
+// Fonctions pouvant ï¿½tre intï¿½grer dans le tools
 
 void AskInt(const char* text, int* value) {
     printf("%s\n", text);
-    scanf("%d", value);
+    scanf_s("%d", value);
 }
 
 
 int Replay() {
     printf("Rejouer (y, n, Y, N)?\n");
     char choice;
-    scanf(" %c", &choice);
+    scanf_s(" %c", &choice);
     if (choice == 'y' || choice == 'Y') {
         return 1;
     }
@@ -44,7 +44,7 @@ int main() {
 
         nombreEssais = 0;
 
-        printf("Devinez le nombre mystère entre %d et %d.\n", borneMinimale, borneMaximale);
+        printf("Devinez le nombre mystï¿½re entre %d et %d.\n", borneMinimale, borneMaximale);
 
         while (nombreEssais < nombreMaxEssais) {
             AskInt("Quel est le nombre ?", &nombreEntre);
@@ -57,13 +57,13 @@ int main() {
                 printf("C'est moins !\n");
             }
             else {
-                printf("Bravo, vous avez trouvé le nombre mystère en %d essais !\n", nombreEssais);
+                printf("Bravo, vous avez trouvï¿½ le nombre mystï¿½re en %d essais !\n", nombreEssais);
                 break;
             }
         }
 
         if (nombreEssais >= nombreMaxEssais && nombreEntre != nombreMystere) {
-            printf("Vous avez perdu. Le nombre mystère était %d.\n", nombreMystere);
+            printf("Vous avez perdu. Le nombre mystï¿½re ï¿½tait %d.\n", nombreMystere);
         }
     } while (Replay());
 
