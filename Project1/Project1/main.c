@@ -65,7 +65,7 @@ void InitTile(Tile* t, int index) {
 }
 
 void PrintGrid(Grid* grid) {
-    system("cls");
+    //system("cls");
     for (int y = 0; y < grid->size; y++) {
         for (int x = 0; x < grid->size; x++) {
             PrintTile(*(grid->tiles + (grid->size * y + x)));
@@ -95,19 +95,22 @@ void DiscoverTile(Grid* grid, int x, int y) {
     Tile* t = grid->tiles + (grid->size * y + x);
     t->IsShowed = 1;
 
-    for (yAR = y - 1; yAR < y + 1 && yAR < grid->size; yAR++) {
-        for (xAR = x - 1; xAR < x + 1 && xAR < grid->size; xAR++) {
-            Tile tile = *(grid->tiles + (gridSize * yAR + xAR));
+    for (int yAR = y - 1; yAR < y + 1 && yAR < grid->size && yAR >= 0; yAR++) {
+        for (int xAR = x - 1; xAR < x + 1 && xAR < grid->size && yAR >= 0; xAR++) {
+            Tile tile = *(grid->tiles + (grid->size * yAR + xAR));
 
             if (tile.IsMine) {
                 tile.MineNumberAround++;
             }
 
+            printf("%dx", xAR);
+            printf("%dy", yAR);
+
             if (!tile.IsMine && !tile.IsShowed) {
-                DiscoverTile(grid, int xAR, int yAR);
+                DiscoverTile(grid, xAR, yAR);
             }
         }
-       
+
     }
 }
 
@@ -120,7 +123,7 @@ int main(void) {
     while (1) {
         int x;
         int y;
-        
+
         AskInt("Coordonnee X : ", &x, 1, gridSize);
         AskInt("Coordonnee Y : ", &y, 1, gridSize);
 
