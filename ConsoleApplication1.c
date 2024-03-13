@@ -46,13 +46,30 @@ void AskInt(const char* text, int* value, int min, int max) {
 
 }
 
+// Min include, max exclude
+int RandomRange(int min, int max) {
+    return (rand() % (max - min - 1)) + min;
+}
+
+int ContainInt(int* intArray, int value) {
+
+    for (int i = 0; i < sizeof intArray; i++) {
+        printf("%d", intArray[i]);
+        if (intArray[i] == value) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void PrintTile(Tile tile) {
-    if (tile.IsShowed) {
+    /*if (tile.IsShowed) {
         printf("| %d |", tile.IsMine);
     }
     else {
         printf("| - |");
-    }
+    }*/
+    printf("%d", tile.IsMine);
 }
 
 void InitTile(Tile* t, int index) {
@@ -68,6 +85,29 @@ void PrintGrid(Grid* grid) {
         }
         printf("\n");
     }
+}; 
+
+void PlaceRandomMine(Grid* grid, int mineCount) {
+
+    int* randomIntegers = (int*)malloc(sizeof(int) * mineCount);
+    if (randomIntegers == NULL)
+        return;
+
+    for (int i = 0; i < mineCount; i++) {
+        int randomValue = 0;
+        do {
+            randomValue = RandomRange(0, grid->size);
+        } while (ContainInt(randomIntegers, randomValue));
+
+        printf("%d", randomValue);
+        randomIntegers[i] = randomValue;
+    }
+
+    for (int i = 0; i < mineCount; i++) {
+        (grid->tiles + randomIntegers[i])->IsMine = 1;
+    }
+
+    free(randomIntegers);
 }
 
 void InitGrid(Grid* grid, int gridSize) {
@@ -83,7 +123,7 @@ void InitGrid(Grid* grid, int gridSize) {
     }
 
     PrintGrid(grid);
-
+    
 }
 
 void DiscoverTile(Grid* grid, int x, int y) {
@@ -98,6 +138,7 @@ int main(void) {
     Grid grid;
     int gridSize = 5;
     InitGrid(&grid, gridSize);
+    PlaceRandomMine(&grid, 10);
 
     while (1) {
         int x;
