@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <ctype.h>
+//#include "tools.h>
 
 
 typedef struct Tile
@@ -9,6 +10,8 @@ typedef struct Tile
 
     short int IsMine;
     short int IsShowed;
+
+    int MineNumberAround;
 
 } Tile;
 
@@ -63,22 +66,22 @@ int ContainInt(int* intArray, int value) {
 }
 
 void PrintTile(Tile tile) {
-    /*if (tile.IsShowed) {
-        printf("| %d |", tile.IsMine);
+    if (tile.IsShowed) {
+        printf("| %d |", tile.MineNumberAround);
     }
     else {
         printf("| - |");
-    }*/
-    printf("%d", tile.IsMine);
+    }
 }
 
 void InitTile(Tile* t, int index) {
     t->IsMine = 0;
     t->IsShowed = 0;
+    t->MineNumberAround = 0;
 }
 
 void PrintGrid(Grid* grid) {
-    system("cls");
+    //system("cls");
     for (int y = 0; y < grid->size; y++) {
         for (int x = 0; x < grid->size; x++) {
             PrintTile(*(grid->tiles + (grid->size * y + x)));
@@ -133,6 +136,23 @@ void DiscoverTile(Grid* grid, int x, int y) {
     Tile* t = grid->tiles + (grid->size * y + x);
     t->IsShowed = 1;
 
+    for (int yAR = y - 1; yAR <= y + 1 && yAR < grid->size && yAR >= 0; yAR++) {
+        for (int xAR = x - 1; xAR <= x + 1 && xAR < grid->size && yAR >= 0; xAR++) {
+            Tile tile = *(grid->tiles + (grid->size * yAR + xAR));
+
+            if (tile.IsMine) {
+                tile.MineNumberAround++;
+            }
+
+            printf("%dx", xAR);
+            printf("%dy", yAR);
+
+            if (!tile.IsMine && !tile.IsShowed) {
+                DiscoverTile(grid, xAR, yAR);
+            }
+        }
+
+    }
 }
 
 int main(void) {
@@ -146,7 +166,7 @@ int main(void) {
     while (1) {
         int x;
         int y;
-        
+
         AskInt("Coordonnee X : ", &x, 1, gridSize);
         AskInt("Coordonnee Y : ", &y, 1, gridSize);
 
