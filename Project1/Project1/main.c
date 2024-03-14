@@ -95,8 +95,8 @@ void DiscoverTile(Grid* grid, int x, int y) {
     Tile* t = grid->tiles + (grid->size * y + x);
     t->IsShowed = 1;
 
-    for (int yAR = y - 1; yAR < y + 1 && yAR < grid->size && yAR >= 0; yAR++) {
-        for (int xAR = x - 1; xAR < x + 1 && xAR < grid->size && yAR >= 0; xAR++) {
+    for (int yAR = y - 1; yAR <= y + 1 && yAR < grid->size && yAR >= 0; yAR++) {
+        for (int xAR = x - 1; xAR <= x + 1 && xAR < grid->size && yAR >= 0; xAR++) {
             Tile tile = *(grid->tiles + (grid->size * yAR + xAR));
 
             if (tile.IsMine) {
