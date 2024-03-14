@@ -54,8 +54,8 @@ int RandomRange(int min, int max) {
 int ContainInt(int* intArray, int value) {
 
     for (int i = 0; i < sizeof intArray; i++) {
-        printf("%d", intArray[i]);
-        if (intArray[i] == value) {
+        printf("%d |||| ", intArray[i]);
+        if (*(intArray + i) == value) {
             return 1;
         }
     }
@@ -93,24 +93,26 @@ void PlaceRandomMine(Grid* grid, int mineCount) {
     if (randomIntegers == NULL)
         return;
 
-    for (int i = 0; i < mineCount; i++) {
+    for (int i = 0; i < sizeof randomIntegers; i++) {
         int randomValue = 0;
         do {
-            randomValue = RandomRange(0, grid->size);
+            randomValue = RandomRange(0, grid->size * grid->size);
         } while (ContainInt(randomIntegers, randomValue));
 
-        printf("%d", randomValue);
-        randomIntegers[i] = randomValue;
+        printf(": %d RANDOM VALUE", randomValue);
+        *(randomIntegers + i) = randomValue;
     }
 
     for (int i = 0; i < mineCount; i++) {
-        (grid->tiles + randomIntegers[i])->IsMine = 1;
+        printf("--%d--", *(randomIntegers + i));
     }
 
-    free(randomIntegers);
+    for (int i = 0; i < mineCount; i++) {
+        (grid->tiles + *(randomIntegers + i))->IsMine = 1;
+    }
 }
 
-void InitGrid(Grid* grid, int gridSize) {
+void InitGrid(Grid* grid, int gridSize, int mineCount) {
     grid->tiles = (Tile*)malloc(sizeof(Tile) * gridSize * gridSize);
     grid->size = gridSize;
 
@@ -122,8 +124,8 @@ void InitGrid(Grid* grid, int gridSize) {
         }
     }
 
+    PlaceRandomMine(grid, mineCount);
     PrintGrid(grid);
-    
 }
 
 void DiscoverTile(Grid* grid, int x, int y) {
@@ -135,10 +137,11 @@ void DiscoverTile(Grid* grid, int x, int y) {
 
 int main(void) {
 
+    srand(time(NULL));
+
     Grid grid;
     int gridSize = 5;
-    InitGrid(&grid, gridSize);
-    PlaceRandomMine(&grid, 10);
+    InitGrid(&grid, gridSize, 6);
 
     while (1) {
         int x;
