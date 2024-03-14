@@ -88,7 +88,7 @@ void PrintGrid(Grid* grid) {
         }
         printf("\n");
     }
-}; 
+};
 
 void PlaceRandomMine(Grid* grid, int mineCount) {
 
@@ -106,11 +106,11 @@ void PlaceRandomMine(Grid* grid, int mineCount) {
         *(randomIntegers + i) = randomValue;
     }
 
-    for (int i = 0; i < mineCount; i++) {
+    for (int i = 0; i < sizeof randomIntegers; i++) {
         printf("--%d--", *(randomIntegers + i));
     }
 
-    for (int i = 0; i < mineCount; i++) {
+    for (int i = 0; i < sizeof randomIntegers; i++) {
         (grid->tiles + *(randomIntegers + i))->IsMine = 1;
     }
 }
@@ -136,20 +136,15 @@ void DiscoverTile(Grid* grid, int x, int y) {
     Tile* t = grid->tiles + (grid->size * y + x);
     t->IsShowed = 1;
 
-    int hasTouchMine = 0;
-    for (int yAR = y - 1; yAR <= y + 1 && yAR < grid->size && yAR != y && yAR >= 0; yAR++) {
-        for (int xAR = x - 1; xAR <= x + 1 && xAR < grid->size && xAR != x && yAR >= 0; xAR++) {
+    for (int yAR = y - 1; yAR <= y + 1 && yAR < grid->size && yAR >= 0; yAR++) {
+        for (int xAR = x - 1; xAR <= x + 1 && xAR < grid->size && yAR >= 0; xAR++) {
             Tile tile = *(grid->tiles + (grid->size * yAR + xAR));
 
             if (tile.IsMine) {
                 tile.MineNumberAround++;
-                hasTouchMine = 1;
             }
 
-            printf("%dx", xAR);
-            printf("%dy", yAR);
-
-            if (!tile.IsMine && !tile.IsShowed && !hasTouchMine) {
+            if (!tile.IsMine && !tile.IsShowed) {
                 DiscoverTile(grid, xAR, yAR);
             }
         }
@@ -162,8 +157,8 @@ int main(void) {
     srand(time(NULL));
 
     Grid grid;
-    int gridSize = 5;
-    InitGrid(&grid, gridSize, 6);
+    int gridSize = 10;
+    InitGrid(&grid, gridSize, 10);
 
     while (1) {
         int x;
