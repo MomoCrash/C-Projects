@@ -23,6 +23,8 @@ typedef struct Grid
     int size;
     Tile* tiles;
 
+    int DiscoveredMine;
+
 } Grid;
 
 void AskInt(const char* text, int* value, int min, int max) {
@@ -50,7 +52,6 @@ void AskInt(const char* text, int* value, int min, int max) {
     } while (error == 0);
 
 }
-
 // Min include, max exclude
 int RandomRange(int min, int max) {
     return (rand() % (max - min - 1)) + min;
@@ -59,7 +60,6 @@ int RandomRange(int min, int max) {
 int ContainInt(int* intArray, int value) {
 
     for (int i = 0; i < sizeof intArray; i++) {
-        printf("%d |||| ", intArray[i]);
         if (*(intArray + i) == value) {
             return 1;
         }
@@ -67,14 +67,56 @@ int ContainInt(int* intArray, int value) {
     return 0;
 }
 
+void MineArroundTile(Grid* grid, int x, int y) {
+    Tile* t = grid->tiles + (grid->size * y + x);
+    for (int yAR = y - 1; yAR <= y + 1; yAR++) {
+
+        if (yAR >= grid->size || yAR < 0) continue;
+        for (int xAR = x - 1; xAR <= x + 1; xAR++) {
+
+            if (xAR >= grid->size || xAR < 0) continue;
+            Tile arroundTile = *(grid->tiles + (grid->size * yAR + xAR));
+            if (arroundTile.IsMine) {
+                t->MineNumberAround++;
+            }
+
+        }
+    }
+}
+
+int DiscoverTile(Grid* grid, int x, int y) {
+
+    Tile* t = grid->tiles + (grid->size * y + x);
+
+    if (t == NULL) return 1;
+    if (t->IsShowed) return 0;
+
+    t->IsShowed = 1;
+    grid->DiscoveredMine++;
+    if (t->IsMine) return 1;
+    if (t->MineNumberAround > 0) return 0;
+
+    for (int yAR = y - 1; yAR <= y + 1; yAR++) {
+        if (yAR >= grid->size || yAR < 0) continue;
+        for (int xAR = x - 1; xAR <= x + 1; xAR++) {
+            if (xAR >= grid->size || xAR < 0) continue;
+
+            Tile tile = *(grid->tiles + (grid->size * yAR + xAR));
+            if (tile.IsShowed) continue;
+
+            DiscoverTile(grid, xAR, yAR);
+        }
+    }
+    return 0;
+
+}
+
 void PrintTile(Tile tile) {
-    if (tile.IsShowed) {
-        printf("| %d |", tile.MineNumberAround);
-    }
-    else if (tile.IsMine) {
+    if (tile.IsShowed && tile.IsMine) {
         printf("| M |");
-    }
-    else {
+    } else if (tile.IsShowed) {
+        printf("| %d |", tile.MineNumberAround);
+    } else {
         printf("| - |");
     }
 }
@@ -87,10 +129,32 @@ void InitTile(Tile* t, int x, int y) {
     t->y;
 }
 
+// GRID
+
+void PlaceRandomMine(Grid* grid, int mineCount) {
+
+    int* randomIntegers = (int*)malloc(sizeof(int) * mineCount);
+    if (!randomIntegers) return;
+
+    for (int i = 0; i < mineCount; i++) {
+        int randomValue = 0;
+        do {
+            randomValue = RandomRange(0, grid->size * grid->size);
+        } while (ContainInt(randomIntegers, randomValue));
+
+        *(randomIntegers + i) = randomValue;
+    }
+
+    for (int i = 0; i < mineCount; i++)
+        (grid->tiles + *(randomIntegers + i))->IsMine = 1;
+
+    free(randomIntegers);
+}
+
 void PrintGrid(Grid* grid) {
     //system("cls");
-    printf("\n");
     for (int y = 0; y < grid->size; y++) {
+        printf("y%d ", y + 1);
         for (int x = 0; x < grid->size; x++) {
             PrintTile(*(grid->tiles + (grid->size * y + x)));
         }
@@ -98,37 +162,10 @@ void PrintGrid(Grid* grid) {
     }
 };
 
-void PlaceRandomMine(Grid* grid, int mineCount) {
-
-    int* randomIntegers = (int*)malloc(sizeof(int) * mineCount);
-    if (randomIntegers == NULL)
-        return;
-
-    for (int i = 0; i < sizeof randomIntegers; i++) {
-        int randomValue = 0;
-        do {
-            randomValue = RandomRange(0, grid->size * grid->size);
-        } while (ContainInt(randomIntegers, randomValue));
-
-        printf(": %d RANDOM VALUE", randomValue);
-        *(randomIntegers + i) = randomValue;
-    }
-
-    for (int i = 0; i < sizeof randomIntegers; i++) {
-        printf("--%d--", *(randomIntegers + i));
-    }
-
-    for (int i = 0; i < sizeof randomIntegers; i++) {
-        (grid->tiles + *(randomIntegers + i))->IsMine = 1;
-    }
-    free(randomIntegers);
-}
-
 void InitGrid(Grid* grid, int gridSize, int mineCount) {
     grid->tiles = (Tile*)malloc(sizeof(Tile) * gridSize * gridSize);
     grid->size = gridSize;
-
-    // Foreach values de tiles on les poses random
+    grid->DiscoveredMine = 0;
 
     for (int y = 0; y < gridSize; y++) {
         for (int x = 0; x < gridSize; x++) {
@@ -137,47 +174,14 @@ void InitGrid(Grid* grid, int gridSize, int mineCount) {
     }
 
     PlaceRandomMine(grid, mineCount);
+
+    for (int y = 0; y < gridSize; y++) {
+        for (int x = 0; x < gridSize; x++) {
+            MineArroundTile(grid, x, y);
+        }
+    }
+
     PrintGrid(grid);
-}
-
-void DiscoverTile(Grid* grid, int x, int y) {
-
-    Tile* t = grid->tiles + (grid->size * y + x);
-    if (t->IsShowed) return;
-    t->IsShowed = 1;
-
-    Tile* aroundTile = (Tile*)malloc(sizeof(Tile) * 9);
-
-    int hasTouchMine = 0;
-    int index = 0;
-
-    for (int yAR = y - 1; yAR <= y + 1 && yAR < grid->size && yAR >= 0; yAR++) {
-        for (int xAR = x - 1; xAR <= x + 1 && xAR < grid->size && xAR >= 0; xAR++) {
-
-            Tile tile = *(grid->tiles + (grid->size * yAR + xAR));
-
-            printf("x:%d|y:%d", xAR, yAR);
-            printf("M?: %d", tile.IsMine);
-
-            if (tile.IsMine) {
-                tile.MineNumberAround++;
-                hasTouchMine = 1;
-            }
-
-            if (!tile.IsMine && !tile.IsShowed && !hasTouchMine) {
-                *(aroundTile + index) = tile;
-            }
-            index++;
-        }
-    }
-
-    if (!hasTouchMine) {
-        for (int i = 0; i < sizeof aroundTile; i++) {
-            Tile* t = (aroundTile + i);
-            DiscoverTile(grid, t->x, t->y);
-            free(t);
-        }
-    }
 }
 
 int main(void) {
@@ -186,7 +190,8 @@ int main(void) {
 
     Grid grid;
     int gridSize = 10;
-    InitGrid(&grid, gridSize, 10);
+    int bombNumber = 10;
+    InitGrid(&grid, gridSize, bombNumber);
 
     while (1) {
         int x;
@@ -198,8 +203,18 @@ int main(void) {
         x--;
         y--;
 
-        DiscoverTile(&grid, x, y);
+        int IsOnMine = DiscoverTile(&grid, x, y);
         PrintGrid(&grid);
+
+        if (IsOnMine) {
+            printf("C'est une mine !!!!!");
+            break;
+        }
+
+        if (grid.DiscoveredMine == (gridSize * gridSize - bombNumber)) {
+            printf("Et c'est gagnée jeune entrepreneur !");
+            break;
+        }
     }
 
     return 1;
