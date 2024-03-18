@@ -154,7 +154,12 @@ void PlaceRandomMine(Grid* grid, int mineCount) {
 void PrintGrid(Grid* grid) {
     //system("cls");
     for (int y = 0; y < grid->size; y++) {
-        printf("y%d ", y + 1);
+        if (y+1 < 10) {
+            printf("y%d  ", y + 1);
+        }
+        else {
+            printf("y%d ", y + 1);
+        }
         for (int x = 0; x < grid->size; x++) {
             PrintTile(*(grid->tiles + (grid->size * y + x)));
         }
@@ -189,7 +194,7 @@ int main(void) {
     srand(time(NULL));
 
     Grid grid;
-    int gridSize = 10;
+    int gridSize = 5;
     int bombNumber = 10;
     InitGrid(&grid, gridSize, bombNumber);
 
