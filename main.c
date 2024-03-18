@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 //#include "tools.h>
+#include <windows.h>
 
 
 typedef struct Tile
@@ -67,6 +68,8 @@ int ContainInt(int* intArray, int value) {
     return 0;
 }
 
+void Color(int couleurDuTexte, int couleurDeFond);
+
 void MineArroundTile(Grid* grid, int x, int y) {
     Tile* t = grid->tiles + (grid->size * y + x);
     for (int yAR = y - 1; yAR <= y + 1; yAR++) {
@@ -113,10 +116,35 @@ int DiscoverTile(Grid* grid, int x, int y) {
 
 void PrintTile(Tile tile) {
     if (tile.IsShowed && tile.IsMine) {
+        Color(12, 0);
         printf("| M |");
-    } else if (tile.IsShowed) {
-        printf("| %d |", tile.MineNumberAround);
-    } else {
+        Color(15, 0);
+    }
+    else if (tile.IsShowed) {
+        switch (tile.MineNumberAround) {
+        case 1:
+            Color(9, 0);
+            printf("| %d |", tile.MineNumberAround);
+            Color(15, 0);
+            break;
+        case 2:
+            Color(10, 0);
+            printf("| %d |", tile.MineNumberAround);
+            Color(15, 0);
+            break;
+        case 3:
+            Color(14, 0);
+            printf("| %d |", tile.MineNumberAround);
+            Color(15, 0);
+            break;
+        default:
+            Color(5, 0);
+            printf("| %d |", tile.MineNumberAround);
+            Color(15, 0);
+            break;
+        }
+    }
+    else {
         printf("| - |");
     }
 }
@@ -153,15 +181,33 @@ void PlaceRandomMine(Grid* grid, int mineCount) {
 
 void PrintGrid(Grid* grid) {
     //system("cls");
-    for (int y = 0; y < grid->size; y++) {
-        if (y+1 < 10) {
-            printf("y%d  ", y + 1);
+    for (int y = 0; y < grid->size+1; y++) {
+
+        if (y == 0) {
+            printf("     ");
+            for (int x = 0; x < grid->size; x++) {
+                if (y == 0) {
+                    Color(10, 0);
+                    printf(" x%d  ", x + 1);
+                    Color(15, 0);
+                }
+            }
+            printf("\n");
+            continue;
+        }
+
+        if (y < 10) {
+            Color(10, 0);
+            printf("y%d  ", y);
+            Color(15, 0);
         }
         else {
-            printf("y%d ", y + 1);
+            Color(10, 0);
+            printf("y%d  ", y);
+            Color(15, 0);
         }
         for (int x = 0; x < grid->size; x++) {
-            PrintTile(*(grid->tiles + (grid->size * y + x)));
+            PrintTile(*(grid->tiles + (grid->size * (y-1) + x)));
         }
         printf("\n");
     }
@@ -224,4 +270,10 @@ int main(void) {
 
     return 1;
 
+}
+
+void Color(int couleurDuTexte, int couleurDeFond) // fonction d'affichage de couleurs
+{
+    HANDLE H = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(H, couleurDeFond * 16 + couleurDuTexte);
 }
