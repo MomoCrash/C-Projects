@@ -2,14 +2,18 @@
 #include <time.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 //#include "tools.h>
 
+
+typedef enum { false, true } bool;
 
 typedef struct Tile
 {
 
-    short int IsMine;
-    short int IsShowed;
+    bool IsMine;
+    bool IsShowed;
+    bool IsFlag;
 
     int MineNumberAround;
     int x;
@@ -23,9 +27,45 @@ typedef struct Grid
     int size;
     Tile* tiles;
 
-    int DiscoveredMine;
+    int DiscoveredTile;
 
 } Grid;
+
+bool AskChar(const char* anwserText, const char* wantedChar, const char* trueChars, const char* falseChars) {
+
+    char userChar;
+
+    bool isAValidChar = false;
+    do {
+        printf_s(anwserText);
+        printf_s("[");
+        for (int i = 0; i < strlen(wantedChar); i++) {
+            printf_s("%c", wantedChar[i]);
+        }
+        printf("]\n");
+        scanf_s("%c", &userChar, 2);
+        for (int i = 0; i < strlen(wantedChar); i++) {
+            if (wantedChar[i] == userChar) {
+                isAValidChar = true;
+                break;
+            }
+        }
+    } while (!isAValidChar);
+
+    for (int i = 0; i < strlen(trueChars); i++) {
+        if (trueChars[i] == userChar) {
+            return true;
+        }
+    }
+    for (int i = 0; i < strlen(falseChars); i++) {
+        if (falseChars[i] == userChar) {
+            return false;
+        }
+    }
+
+    return false;
+
+}
 
 void AskInt(const char* text, int* value, int min, int max) {
 
@@ -52,19 +92,20 @@ void AskInt(const char* text, int* value, int min, int max) {
     } while (error == 0);
 
 }
+
 // Min include, max exclude
 int RandomRange(int min, int max) {
     return (rand() % (max - min - 1)) + min;
 }
 
-int ContainInt(int* intArray, int value) {
+bool ContainInt(int* intArray, int value) {
 
     for (int i = 0; i < sizeof intArray; i++) {
         if (*(intArray + i) == value) {
-            return 1;
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
 void MineArroundTile(Grid* grid, int x, int y) {
@@ -84,17 +125,17 @@ void MineArroundTile(Grid* grid, int x, int y) {
     }
 }
 
-int DiscoverTile(Grid* grid, int x, int y) {
+bool DiscoverTile(Grid* grid, int x, int y) {
 
     Tile* t = grid->tiles + (grid->size * y + x);
 
-    if (t == NULL) return 1;
-    if (t->IsShowed) return 0;
+    if (t == NULL) return true;
+    if (t->IsShowed) return false;
 
     t->IsShowed = 1;
-    grid->DiscoveredMine++;
-    if (t->IsMine) return 1;
-    if (t->MineNumberAround > 0) return 0;
+    grid->DiscoveredTile++;
+    if (t->IsMine) return true;
+    if (t->MineNumberAround > 0) return false;
 
     for (int yAR = y - 1; yAR <= y + 1; yAR++) {
         if (yAR >= grid->size || yAR < 0) continue;
@@ -107,8 +148,18 @@ int DiscoverTile(Grid* grid, int x, int y) {
             DiscoverTile(grid, xAR, yAR);
         }
     }
-    return 0;
+    return false;
 
+}
+
+void PlaceFlag(Grid* grid, int x, int y) {
+    Tile* t = grid->tiles + (grid->size * y + x);
+    if (t->IsFlag) {
+        t->IsFlag = false;
+    }
+    else {
+        t->IsFlag = true;
+    }
 }
 
 void PrintTile(Tile tile) {
@@ -122,8 +173,9 @@ void PrintTile(Tile tile) {
 }
 
 void InitTile(Tile* t, int x, int y) {
-    t->IsMine = 0;
-    t->IsShowed = 0;
+    t->IsMine = false;
+    t->IsShowed = false;
+    t->IsFlag = false;
     t->MineNumberAround = 0;
     t->x;
     t->y;
@@ -146,9 +198,22 @@ void PlaceRandomMine(Grid* grid, int mineCount) {
     }
 
     for (int i = 0; i < mineCount; i++)
-        (grid->tiles + *(randomIntegers + i))->IsMine = 1;
+        (grid->tiles + *(randomIntegers + i))->IsMine = true;
 
     free(randomIntegers);
+}
+
+int CountGoodFlag(Grid* grid) {
+    int goodMine = 0;
+    for (int y = 0; y < grid->size; y++) {
+        for (int x = 0; x < grid->size; x++) {
+            Tile* t = grid->tiles + (grid->size * y + x);
+            if (t->IsFlag && t->IsMine) {
+                goodMine++;
+            }
+        }
+    }
+    return goodMine;
 }
 
 void PrintGrid(Grid* grid) {
@@ -170,7 +235,7 @@ void PrintGrid(Grid* grid) {
 void InitGrid(Grid* grid, int gridSize, int mineCount) {
     grid->tiles = (Tile*)malloc(sizeof(Tile) * gridSize * gridSize);
     grid->size = gridSize;
-    grid->DiscoveredMine = 0;
+    grid->DiscoveredTile = 0;
 
     for (int y = 0; y < gridSize; y++) {
         for (int x = 0; x < gridSize; x++) {
@@ -189,6 +254,49 @@ void InitGrid(Grid* grid, int gridSize, int mineCount) {
     PrintGrid(grid);
 }
 
+bool GameLoop(Grid* grid, int mineCount) {
+
+    bool Defeated = false;
+    bool Win = false; 
+    do {
+
+        bool Flag = AskChar("\n Mettre un drapeau ou decouvrir ?", "fFdD", "fF", "dD");
+        bool IsOnMine = false;
+
+        int x;
+        int y;
+
+        AskInt("Coordonnee X : ", &x, 1, grid->size);
+        AskInt("Coordonnee Y : ", &y, 1, grid->size);
+
+        x--;
+        y--;
+
+        if (Flag) {
+
+            PlaceFlag(grid, x, y);
+        }
+        else {
+
+            IsOnMine = DiscoverTile(grid, x, y);
+        }
+
+        PrintGrid(grid);
+
+        if (IsOnMine) {
+            printf("C'est une mine ! \n\n");
+            Defeated = true;
+        }
+
+        if (grid->DiscoveredTile == (grid->size * grid->size - CountGoodFlag(grid) - mineCount)) {
+            printf("Et c'est gagnee jeune entrepreneur !");
+            Win = true;
+        }
+    } while (!Defeated && !Win);
+
+    return (!Defeated && Win);
+}
+
 int main(void) {
 
     srand(time(NULL));
@@ -196,30 +304,20 @@ int main(void) {
     Grid grid;
     int gridSize = 5;
     int bombNumber = 10;
-    InitGrid(&grid, gridSize, bombNumber);
 
-    while (1) {
-        int x;
-        int y;
+    bool WantReplay = true;
 
-        AskInt("Coordonnee X : ", &x, 1, gridSize);
-        AskInt("Coordonnee Y : ", &y, 1, gridSize);
+    while (WantReplay) {
 
-        x--;
-        y--;
+        AskInt("Sur quel taille de plateau voulez-vous jouer ?", &gridSize, 0, 100);
+        AskInt("Avec combiens de mine", &bombNumber, 0, gridSize*gridSize/2);
 
-        int IsOnMine = DiscoverTile(&grid, x, y);
-        PrintGrid(&grid);
+        InitGrid(&grid, gridSize, bombNumber);
 
-        if (IsOnMine) {
-            printf("C'est une mine !!!!!");
-            break;
-        }
+        GameLoop(&grid, bombNumber);
 
-        if (grid.DiscoveredMine == (gridSize * gridSize - bombNumber)) {
-            printf("Et c'est gagnée jeune entrepreneur !");
-            break;
-        }
+        WantReplay = AskChar("Voulez-vous rejouer ?", "yYnN", "yY", "nN");
+
     }
 
     return 1;
