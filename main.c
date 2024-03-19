@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-//#include "tools.h>
+#include "tools.c"
 #include <windows.h>
 
 
@@ -30,6 +30,8 @@ typedef struct Grid
     int remainTiles; //remainingTile
 
 } Grid;
+
+void SetConsoleColor(int textcolor, int backgroundcolor);
 
 void ClearBuffer() {
     while (getchar() != "\n");
@@ -71,31 +73,7 @@ bool AskChar(const char* anwserText, const char* wantedChar, const char* trueCha
 
 }
 
-void AskInt(const char* text, int* value, int min, int max) {
 
-    char c = '0';
-    int error = 0;
-    do {
-        printf(text);
-        printf("[%d;%d] : \n", min, max);
-        error = scanf_s("%d", value);
-
-        if (error == 0) {
-            printf("Vous devez mettre un nombre ! \n");
-            do {
-                c = getchar();
-            } while (!isdigit(c));
-            ungetc(c, stdin);
-            continue;
-        }
-        if (*value < min || *value > max) {
-            printf("Le nombre est hors des bornes ! \n");
-            error = 0;
-            continue;
-        }
-    } while (error == 0);
-
-}
 
 // Min include, max exclude
 int RandomRange(int min, int max) {
@@ -110,6 +88,17 @@ bool ContainInt(int* intArray, int value) {
         }
     }
     return false;
+}
+
+void RemoveIndexFromArray(int* array, int index) {
+
+    if (index >= 0)
+    {
+        for (int i = index; i < sizeof (array); i++)
+            array[i] = array[i + 1];
+    }
+    else
+        printf("Element Not Found\n");
 }
 
 void RemoveIndexFromArray(int* array, int index) {
@@ -192,36 +181,36 @@ void PlaceFlag(Grid* grid, int x, int y) {
 void PrintTile(const Tile* tile) {
     if (tile == NULL) return;
     if (tile->isShowed && tile->isMine) {
-        Color(12, 0);
+        SetConsoleColor(12, 0);
         printf("| M |");
-        Color(15, 0);
+        SetConsoleColor(15, 0);
     }
     else if (tile->isShowed) {
         switch (tile->mineNumberAround) {
         case 0:
-            Color(15, 0);
+            SetConsoleColor(15, 0);
             printf("| %d |", tile->mineNumberAround);
-            Color(15, 0);
+            SetConsoleColor(15, 0);
             break;
         case 1:
-            Color(9, 0);
+            SetConsoleColor(9, 0);
             printf("| %d |", tile->mineNumberAround);
-            Color(15, 0);
+            SetConsoleColor(15, 0);
             break;
         case 2:
-            Color(10, 0);
+            SetConsoleColor(10, 0);
             printf("| %d |", tile->mineNumberAround);
-            Color(15, 0);
+            SetConsoleColor(15, 0);
             break;
         case 3:
-            Color(14, 0);
+            SetConsoleColor(14, 0);
             printf("| %d |", tile->mineNumberAround);
-            Color(15, 0);
+            SetConsoleColor(15, 0);
             break;
         default:
-            Color(5, 0);
+            SetConsoleColor(5, 0);
             printf("| %d |", tile->mineNumberAround);
-            Color(15, 0);
+            SetConsoleColor(15, 0);
             break;
         }
     }
@@ -286,9 +275,9 @@ void PrintGrid(const Grid* grid) {
             printf("     ");
             for (int x = 0; x < grid->size; x++) {
                 if (y == 0) {
-                    Color(10, 0);
+                    SetConsoleColor(10, 0);
                     printf(" x%d  ", x + 1);
-                    Color(15, 0);
+                    SetConsoleColor(15, 0);
                 }
             }
             printf("\n");
@@ -296,14 +285,14 @@ void PrintGrid(const Grid* grid) {
         }
 
         if (y < 10) {
-            Color(10, 0);
+            SetConsoleColor(10, 0);
             printf("y%d  ", y);
-            Color(15, 0);
+            SetConsoleColor(15, 0);
         }
         else {
-            Color(10, 0);
+            SetConsoleColor(10, 0);
             printf("y%d  ", y);
-            Color(15, 0);
+            SetConsoleColor(15, 0);
         }
         for (int x = 0; x < grid->size; x++) {
             PrintTile(GetTile(grid, x, y-1));
@@ -410,9 +399,8 @@ int main(void) {
 
 }
 
-// #TODO english , better name
-void Color(int couleurDuTexte, int couleurDeFond) // fonction d'affichage de couleurs
+void SetConsoleColor(int textcolor, int backgroundcolor)
 {
     HANDLE H = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(H, couleurDeFond * 16 + couleurDuTexte);
+    SetConsoleTextAttribute(H, backgroundcolor * 16 + textcolor);
 }
