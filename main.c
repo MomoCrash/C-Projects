@@ -32,6 +32,10 @@ typedef struct Grid
 
 } Grid;
 
+void ClearBuffer() {
+    while (getchar() != "\n");
+}
+
 bool AskChar(const char* anwserText, const char* wantedChar, const char* trueChars, const char* falseChars) {
 
     char userChar;
@@ -44,7 +48,7 @@ bool AskChar(const char* anwserText, const char* wantedChar, const char* trueCha
             printf_s("%c", wantedChar[i]);
         }
         printf("]\n");
-        scanf_s("%c", &userChar, 2);
+        scanf_s("%c", &userChar, 1);
         for (int i = 0; i < strlen(wantedChar); i++) {
             if (wantedChar[i] == userChar) {
                 isAValidChar = true;
@@ -173,6 +177,11 @@ void PrintTile(Tile tile) {
     }
     else if (tile.IsShowed) {
         switch (tile.MineNumberAround) {
+        case 0:
+            Color(15, 0);
+            printf("| %d |", tile.MineNumberAround);
+            Color(15, 0);
+            break;
         case 1:
             Color(9, 0);
             printf("| %d |", tile.MineNumberAround);
@@ -194,6 +203,9 @@ void PrintTile(Tile tile) {
             Color(15, 0);
             break;
         }
+    }
+    else if (tile.IsFlag) {
+        printf("| F |");
     }
     else {
         printf("| - |");
@@ -334,7 +346,7 @@ bool GameLoop(Grid* grid, int mineCount) {
             Defeated = true;
         }
 
-        if (grid->DiscoveredTile == (grid->size * grid->size - CountGoodFlag(grid) - mineCount)) {
+        if (grid->DiscoveredTile == (grid->size * grid->size - (CountGoodFlag(grid) + (mineCount- CountGoodFlag(grid))))) {
             printf("Et c'est gagnee jeune entrepreneur !");
             Win = true;
         }
