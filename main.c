@@ -17,9 +17,7 @@ typedef struct Tile
     bool isShowed;
     bool isFlag;
 
-    int mineNumberAround;
-    int x;
-    int y;
+    short int mineNumberAround;
 
 } Tile;
 
@@ -114,26 +112,35 @@ bool ContainInt(int* intArray, int value) {
     return false;
 }
 
-void Color(int couleurDuTexte, int couleurDeFond);
+void RemoveIndexFromArray(int* array, int index) {
 
-Tile* GetTile( Grid* grid, int x, int y ) 
-{
-    // return NULL si en dheors de la range
-
-    //return & Tile
-
+    if (index >= 0)
+    {
+        for (int i = index; i < sizeof (array); i++)
+            array[i] = array[i + 1];
+    }
+    else
+        printf("Element Not Found\n");
 }
 
-void MineArroundTile(Grid* grid, int x, int y) {
+void Color(int couleurDuTexte, int couleurDeFond);
+
+Tile* GetTile(const Grid* grid, const int x, const int y ) 
+{
+    if (x >= grid->size || x < 0) return NULL;
+    if (y >= grid->size || y < 0) return NULL;
     Tile* t = grid->tiles + (grid->size * y + x);
+    if (!t) exit(1);
+    return t;
+}
+
+void MineArroundTile(const Grid* grid, const int x, const int y) {
+    Tile* t = GetTile(grid, x, y);
     for (int yAR = y - 1; yAR <= y + 1; yAR++) {
-
-        if (yAR >= grid->size || yAR < 0) continue;
         for (int xAR = x - 1; xAR <= x + 1; xAR++) {
-
-            if (xAR >= grid->size || xAR < 0) continue;
-            Tile arroundTile = *(grid->tiles + (grid->size * yAR + xAR));
-            if (arroundTile.isMine) {
+            Tile* arroundTile = GetTile(grid, xAR, yAR);
+            if (arroundTile == NULL) continue;
+            if (arroundTile->isMine) {
                 t->mineNumberAround++;
             }
 
@@ -141,44 +148,49 @@ void MineArroundTile(Grid* grid, int x, int y) {
     }
 }
 
-bool DiscoverTile(Grid* grid, int x, int y) {
+bool CheckTileState(Tile* tile) {
 
-    Tile* t = grid->tiles + (grid->size * y + x);
+    if (tile == NULL) exit(1);
+    if (tile->isShowed) return false;
 
-    if (t == NULL) return true;
-    if (t->isShowed) return false;
-
-    t->isShowed = 1;
-    grid->remainTiles++;
-    if (t->isMine) return true;
-    if (t->mineNumberAround > 0) return false;
-
-    for (int yAR = y - 1; yAR <= y + 1; yAR++) {
-        if (yAR >= grid->size || yAR < 0) continue;
-        for (int xAR = x - 1; xAR <= x + 1; xAR++) {
-            if (xAR >= grid->size || xAR < 0) continue;
-
-            Tile tile = *(grid->tiles + (grid->size * yAR + xAR));
-            if (tile.isShowed) continue;
-
-            DiscoverTile(grid, xAR, yAR);
-        }
-    }
+    tile->isShowed = 1;
+    if (tile->isMine) return true;
     return false;
 
 }
 
+void DiscoverTile(Grid* grid, Tile* baseTile, const int x, const int y) {
+
+    baseTile->isShowed = true;
+    if (baseTile->mineNumberAround > 0) return;
+
+    for (int yAR = y - 1; yAR <= y + 1; yAR++) {
+        for (int xAR = x - 1; xAR <= x + 1; xAR++) {
+
+            Tile* tile = GetTile(grid, xAR, yAR);
+            if (tile == NULL) continue;
+            if (tile->isShowed) continue;
+
+            DiscoverTile(grid, tile, xAR, yAR);
+        }
+    }
+    return;
+
+}
+
 void PlaceFlag(Grid* grid, int x, int y) {
-    Tile* t = grid->tiles + (grid->size * y + x);
+    Tile* t = GetTile(grid, x, y);
+    if (t == NULL) return;
     if (t->isFlag) {
         t->isFlag = false;
-    }
+    } 
     else {
         t->isFlag = true;
     }
 }
 
 void PrintTile(const Tile* tile) {
+    if (tile == NULL) return;
     if (tile->isShowed && tile->isMine) {
         Color(12, 0);
         printf("| M |");
@@ -221,43 +233,43 @@ void PrintTile(const Tile* tile) {
     }
 }
 
-void InitTile(Tile* t, int x, int y) {
+void InitTile(Tile* t) {
     t->isMine = false;
     t->isShowed = false;
     t->isFlag = false;
     t->mineNumberAround = 0;
-    t->x;
-    t->y;
 }
 
 // GRID
 
-//#TODO better algo
 void PlaceRandomMine(Grid* grid, int mineCount) {
 
-    int* randomIntegers = (int*)malloc(sizeof(int) * mineCount);
+    int gridTileCount = grid->size * grid->size;
+    int* randomIntegers = (int*)malloc(sizeof(int) * (gridTileCount));
     if (!randomIntegers) exit(1);
 
-    for (int i = 0; i < mineCount; i++) {
-        int randomValue = 0;
-        do {
-            randomValue = RandomRange(0, grid->size * grid->size);
-        } while (ContainInt(randomIntegers, randomValue));
-
-        *(randomIntegers + i) = randomValue;
+    for (int i = 0; i < gridTileCount; i++) {
+        randomIntegers[i] = i;
     }
 
-    for (int i = 0; i < mineCount; i++)
-        (grid->tiles + *(randomIntegers + i))->isMine = true;
+    for (int i = 0; i < mineCount; i++) {
+        if (!randomIntegers) exit(1);
+        int randIndex = rand() % (gridTileCount - i);
+        (grid->tiles + randomIntegers[randIndex])->isMine = true;
+        RemoveIndexFromArray(randomIntegers, randIndex);
+        randomIntegers = (int*) realloc(randomIntegers, gridTileCount * sizeof(int) - i * sizeof(int));
+    }
 
     free(randomIntegers);
+
 }
 
 int CountGoodFlag(Grid* grid) {
     int goodMine = 0;
     for (int y = 0; y < grid->size; y++) {
         for (int x = 0; x < grid->size; x++) {
-            Tile* t = grid->tiles + (grid->size * y + x);
+            Tile* t = GetTile(grid, x, y);
+            if (t == NULL) continue;
             if (t->isFlag && t->isMine) {
                 goodMine++;
             }
@@ -267,7 +279,7 @@ int CountGoodFlag(Grid* grid) {
 }
 
 void PrintGrid(const Grid* grid) {
-    system("cls");
+    //system("cls");
     for (int y = 0; y < grid->size+1; y++) {
 
         if (y == 0) {
@@ -294,7 +306,7 @@ void PrintGrid(const Grid* grid) {
             Color(15, 0);
         }
         for (int x = 0; x < grid->size; x++) {
-            PrintTile((grid->tiles + (grid->size * (y-1) + x)));
+            PrintTile(GetTile(grid, x, y-1));
         }
         printf("\n");
     }
@@ -303,16 +315,14 @@ void PrintGrid(const Grid* grid) {
 void InitGrid(Grid* grid, int gridSize, int mineCount) {
     grid->tiles = (Tile*)malloc(sizeof(Tile) * gridSize * gridSize);
     grid->size = gridSize;
-    grid->remainTiles = 0;
+    grid->remainTiles = gridSize * gridSize;
 
     for (int y = 0; y < gridSize; y++) {
         for (int x = 0; x < gridSize; x++) {
-            InitTile(grid->tiles + (gridSize * y + x), x, y);
+            InitTile(GetTile(grid, x, y), x, y);
         }
     }
-
     PlaceRandomMine(grid, mineCount);
-
     for (int y = 0; y < gridSize; y++) {
         for (int x = 0; x < gridSize; x++) {
             MineArroundTile(grid, x, y);
@@ -346,7 +356,13 @@ bool GameLoop(Grid* grid, int mineCount) {
         }
         else {
 
-            isOnMine = DiscoverTile(grid, x, y);
+            Tile* tile = GetTile(grid, x, y);
+            if (CheckTileState(tile)) {
+                isOnMine = true;
+            }
+            else {
+                DiscoverTile(grid, tile, x, y);
+            }
         }
 
         PrintGrid(grid);
@@ -377,7 +393,7 @@ int main(void) {
 
     while (isReplaying) {
 
-        AskInt("Sur quel taille de plateau voulez-vous jouer ?", &gridSize, 0, 100);
+        AskInt("Sur quel taille de plateau voulez-vous jouer ?", &gridSize, 0, 1000);
         AskInt("Avec combiens de mine", &bombNumber, 0, gridSize*gridSize/2);
 
         InitGrid(&grid, gridSize, bombNumber);
@@ -387,6 +403,8 @@ int main(void) {
         isReplaying = AskChar("Voulez-vous rejouer ?", "yYnN", "yY", "nN");
 
     }
+
+    free(grid.tiles);
 
     return 1;
 
