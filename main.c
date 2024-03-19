@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-//#include "tools.h>
+#include "tools.c"
 #include <windows.h>
 
 
@@ -28,9 +28,15 @@ typedef struct Grid
     int size;
     Tile* tiles;
 
+<<<<<<< Updated upstream
     int DiscoveredTile;
+=======
+    int remainingTile;
+>>>>>>> Stashed changes
 
 } Grid;
+
+void SetConsoleColor(int textcolor, int backgroundcolor);
 
 void ClearBuffer() {
     while (getchar() != "\n");
@@ -72,31 +78,7 @@ bool AskChar(const char* anwserText, const char* wantedChar, const char* trueCha
 
 }
 
-void AskInt(const char* text, int* value, int min, int max) {
 
-    char c = '0';
-    int error = 0;
-    do {
-        printf(text);
-        printf("[%d;%d] : \n", min, max);
-        error = scanf_s("%d", value);
-
-        if (error == 0) {
-            printf("Vous devez mettre un nombre ! \n");
-            do {
-                c = getchar();
-            } while (!isdigit(c));
-            ungetc(c, stdin);
-            continue;
-        }
-        if (*value < min || *value > max) {
-            printf("Le nombre est hors des bornes ! \n");
-            error = 0;
-            continue;
-        }
-    } while (error == 0);
-
-}
 
 // Min include, max exclude
 int RandomRange(int min, int max) {
@@ -113,7 +95,17 @@ bool ContainInt(int* intArray, int value) {
     return false;
 }
 
+<<<<<<< Updated upstream
 void Color(int couleurDuTexte, int couleurDeFond);
+=======
+Tile* GetTile( Grid* grid, int x, int y ) 
+{
+    // return NULL si en dheors de la range
+
+    //return & Tile
+
+}
+>>>>>>> Stashed changes
 
 void MineArroundTile(Grid* grid, int x, int y) {
     Tile* t = grid->tiles + (grid->size * y + x);
@@ -139,10 +131,17 @@ bool DiscoverTile(Grid* grid, int x, int y) {
     if (t == NULL) return true;
     if (t->IsShowed) return false;
 
+<<<<<<< Updated upstream
     t->IsShowed = 1;
     grid->DiscoveredTile++;
     if (t->IsMine) return true;
     if (t->MineNumberAround > 0) return false;
+=======
+    t->isShowed = 1;
+    grid->remainingTile++;
+    if (t->isMine) return true;
+    if (t->mineNumberAround > 0) return false;
+>>>>>>> Stashed changes
 
     for (int yAR = y - 1; yAR <= y + 1; yAR++) {
         if (yAR >= grid->size || yAR < 0) continue;
@@ -169,15 +168,22 @@ void PlaceFlag(Grid* grid, int x, int y) {
     }
 }
 
+<<<<<<< Updated upstream
 void PrintTile(Tile tile) {
     if (tile.IsShowed && tile.IsMine) {
         Color(12, 0);
+=======
+void PrintTile(const Tile* tile) {
+    if (tile->isShowed && tile->isMine) {
+        SetConsoleColor(12, 0);
+>>>>>>> Stashed changes
         printf("| M |");
-        Color(15, 0);
+        SetConsoleColor(15, 0);
     }
     else if (tile.IsShowed) {
         switch (tile.MineNumberAround) {
         case 0:
+<<<<<<< Updated upstream
             Color(15, 0);
             printf("| %d |", tile.MineNumberAround);
             Color(15, 0);
@@ -201,6 +207,31 @@ void PrintTile(Tile tile) {
             Color(5, 0);
             printf("| %d |", tile.MineNumberAround);
             Color(15, 0);
+=======
+            SetConsoleColor(15, 0);
+            printf("| %d |", tile->mineNumberAround);
+            SetConsoleColor(15, 0);
+            break;
+        case 1:
+            SetConsoleColor(9, 0);
+            printf("| %d |", tile->mineNumberAround);
+            SetConsoleColor(15, 0);
+            break;
+        case 2:
+            SetConsoleColor(10, 0);
+            printf("| %d |", tile->mineNumberAround);
+            SetConsoleColor(15, 0);
+            break;
+        case 3:
+            SetConsoleColor(14, 0);
+            printf("| %d |", tile->mineNumberAround);
+            SetConsoleColor(15, 0);
+            break;
+        default:
+            SetConsoleColor(5, 0);
+            printf("| %d |", tile->mineNumberAround);
+            SetConsoleColor(15, 0);
+>>>>>>> Stashed changes
             break;
         }
     }
@@ -264,9 +295,9 @@ void PrintGrid(Grid* grid) {
             printf("     ");
             for (int x = 0; x < grid->size; x++) {
                 if (y == 0) {
-                    Color(10, 0);
+                    SetConsoleColor(10, 0);
                     printf(" x%d  ", x + 1);
-                    Color(15, 0);
+                    SetConsoleColor(15, 0);
                 }
             }
             printf("\n");
@@ -274,14 +305,14 @@ void PrintGrid(Grid* grid) {
         }
 
         if (y < 10) {
-            Color(10, 0);
+            SetConsoleColor(10, 0);
             printf("y%d  ", y);
-            Color(15, 0);
+            SetConsoleColor(15, 0);
         }
         else {
-            Color(10, 0);
+            SetConsoleColor(10, 0);
             printf("y%d  ", y);
-            Color(15, 0);
+            SetConsoleColor(15, 0);
         }
         for (int x = 0; x < grid->size; x++) {
             PrintTile(*(grid->tiles + (grid->size * (y-1) + x)));
@@ -293,7 +324,11 @@ void PrintGrid(Grid* grid) {
 void InitGrid(Grid* grid, int gridSize, int mineCount) {
     grid->tiles = (Tile*)malloc(sizeof(Tile) * gridSize * gridSize);
     grid->size = gridSize;
+<<<<<<< Updated upstream
     grid->DiscoveredTile = 0;
+=======
+    grid->remainingTile = 0;
+>>>>>>> Stashed changes
 
     for (int y = 0; y < gridSize; y++) {
         for (int x = 0; x < gridSize; x++) {
@@ -346,7 +381,11 @@ bool GameLoop(Grid* grid, int mineCount) {
             Defeated = true;
         }
 
+<<<<<<< Updated upstream
         if (grid->DiscoveredTile == (grid->size * grid->size - (CountGoodFlag(grid) + (mineCount- CountGoodFlag(grid))))) {
+=======
+        if (grid->remainingTile == (grid->size * grid->size - (CountGoodFlag(grid) + (mineCount- CountGoodFlag(grid))))) {
+>>>>>>> Stashed changes
             printf("Et c'est gagnee jeune entrepreneur !");
             Win = true;
         }
@@ -382,8 +421,12 @@ int main(void) {
 
 }
 
+<<<<<<< Updated upstream
 void Color(int couleurDuTexte, int couleurDeFond) // fonction d'affichage de couleurs
+=======
+void SetConsoleColor(int textcolor, int backgroundcolor)
+>>>>>>> Stashed changes
 {
     HANDLE H = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(H, couleurDeFond * 16 + couleurDuTexte);
+    SetConsoleTextAttribute(H, backgroundcolor * 16 + textcolor);
 }
