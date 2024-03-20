@@ -264,6 +264,32 @@ void InitGrid(Grid* grid, int gridSize, int mineCount) {
     PrintGrid(grid);
 }
 
+void MoveMine(Grid* grid, int x, int y) {
+
+    int* availableTiles = (int*)malloc(sizeof(int) * (grid->size * grid->size));
+    int availableCount = 0;
+
+    for (int i = 0; i < grid->size * grid->size; i++) {
+        if (!grid->tiles[i].isMine) {
+            availableTiles[availableCount] = i;
+            availableCount++;
+        }
+    }
+
+    if (availableCount > 0) {
+        int randomIndex = rand() % availableCount;
+        int newTileIndex = availableTiles[randomIndex];
+
+        Tile* originaltile = GetTile(grid, x, y);
+        originaltile = false;
+
+        grid->tiles[newTileIndex].isMine = true;
+
+
+    }
+
+}
+
 bool GameLoop(Grid* grid, int mineCount) {
 
     bool isDefeat = false;
@@ -292,21 +318,23 @@ bool GameLoop(Grid* grid, int mineCount) {
 
             Tile* tile = GetTile(grid, x, y);
             if (TileIsAMine(tile)) {
-                isOnMine = true;
-            }
+                if (counts == 0) {
+
+                }
+                else {
+                    isOnMine = true;
+                }            }
             else {
                 DiscoverTile(grid, tile, x, y);
-                counts = counts + 1;
             }
         }
 
         PrintGrid(grid);
 
         if (isOnMine && counts == 0) {
-            TileIsAMine == false;
-            GetTile(grid, x, y);
-            
-
+            MoveMine(grid, x, y);
+            PrintGrid(grid);
+            continue;
         }
 
         else if (isOnMine) {
@@ -315,9 +343,10 @@ bool GameLoop(Grid* grid, int mineCount) {
         }
 
         if (grid->remainTiles == (grid->size * grid->size - (CountGoodFlag(grid) + (mineCount- CountGoodFlag(grid))))) {
-            printf("Et c'est gagnee jeune entrepreneur !");
+            printf("Et c'est gagne jeune entrepreneur !");
             isWin = true;
         }
+        counts++;
     } while (!isDefeat && !isWin);
 
     return (!isDefeat && isWin);
