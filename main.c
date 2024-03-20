@@ -268,6 +268,8 @@ bool GameLoop(Grid* grid, int mineCount) {
 
     bool isDefeat = false;
     bool isWin = false; 
+    int counts = 0;
+
     do {
 
         bool isFlag = AskChar("\n Mettre un drapeau ou decouvrir ?", "fFdD", "fF", "dD");
@@ -294,12 +296,20 @@ bool GameLoop(Grid* grid, int mineCount) {
             }
             else {
                 DiscoverTile(grid, tile, x, y);
+                counts = counts + 1;
             }
         }
 
         PrintGrid(grid);
 
-        if (isOnMine) {
+        if (isOnMine && counts == 0) {
+            TileIsAMine == false;
+            GetTile(grid, x, y);
+            
+
+        }
+
+        else if (isOnMine) {
             printf("C'est une mine ! \n\n");
             isDefeat = true;
         }
@@ -312,6 +322,7 @@ bool GameLoop(Grid* grid, int mineCount) {
 
     return (!isDefeat && isWin);
 }
+
 
 int main(void) {
 
