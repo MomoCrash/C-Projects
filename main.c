@@ -3,13 +3,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "tools.c"
+#include "tools.h"
 #include <windows.h>
 
-
-typedef enum { false, true } bool;
-
-//#TODO naming convention
 typedef struct Tile
 {
 
@@ -27,93 +23,17 @@ typedef struct Grid
     int size;
     Tile* tiles;
 
-    int remainTiles; //remainingTile
+    int remainTiles;
 
 } Grid;
 
-void SetConsoleColor(int textcolor, int backgroundcolor);
-
-void ClearBuffer() {
-    while (getchar() != "\n");
-}
-
-bool AskChar(const char* anwserText, const char* wantedChar, const char* trueChars, const char* falseChars) {
-
-    char userChar;
-
-    bool isAValidChar = false;
-    do {
-        printf_s(anwserText);
-        printf_s("[");
-        for (int i = 0; i < strlen(wantedChar); i++) {
-            printf_s("%c", wantedChar[i]);
-        }
-        printf("]\n");
-        scanf_s("%c", &userChar, 1);
-        for (int i = 0; i < strlen(wantedChar); i++) {
-            if (wantedChar[i] == userChar) {
-                isAValidChar = true;
-                break;
-            }
-        }
-    } while (!isAValidChar);
-
-    for (int i = 0; i < strlen(trueChars); i++) {
-        if (trueChars[i] == userChar) {
-            return true;
-        }
-    }
-    for (int i = 0; i < strlen(falseChars); i++) {
-        if (falseChars[i] == userChar) {
-            return false;
-        }
-    }
-
-    return false;
-
-}
-
-
-
-// Min include, max exclude
-int RandomRange(int min, int max) {
-    return (rand() % (max - min - 1)) + min;
-}
-
-bool ContainInt(int* intArray, int value) {
-
-    for (int i = 0; i < sizeof intArray; i++) {
-        if (*(intArray + i) == value) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void RemoveIndexFromArray(int* array, int index) {
-
-    if (index >= 0)
-    {
-        for (int i = index; i < sizeof (array); i++)
-            array[i] = array[i + 1];
-    }
-    else
-        printf("Element Not Found\n");
-}
-
-void RemoveIndexFromArray(int* array, int index) {
-
-    if (index >= 0)
-    {
-        for (int i = index; i < sizeof (array); i++)
-            array[i] = array[i + 1];
-    }
-    else
-        printf("Element Not Found\n");
-}
-
-void Color(int couleurDuTexte, int couleurDeFond);
-
+/// <summary>
+/// Get a tile from the grid
+/// </summary>
+/// <param name="grid"></param>
+/// <param name="x"></param>
+/// <param name="y"></param>
+/// <returns>The tile from gift grid position</returns>
 Tile* GetTile(const Grid* grid, const int x, const int y ) 
 {
     if (x >= grid->size || x < 0) return NULL;
@@ -123,7 +43,13 @@ Tile* GetTile(const Grid* grid, const int x, const int y )
     return t;
 }
 
-void MineArroundTile(const Grid* grid, const int x, const int y) {
+/// <summary>
+/// Set mine number arround a tile
+/// </summary>
+/// <param name="grid"></param>
+/// <param name="x"></param>
+/// <param name="y"></param>
+void RefreshMineCountAround(const Grid* grid, const int x, const int y) {
     Tile* t = GetTile(grid, x, y);
     for (int yAR = y - 1; yAR <= y + 1; yAR++) {
         for (int xAR = x - 1; xAR <= x + 1; xAR++) {
@@ -132,12 +58,16 @@ void MineArroundTile(const Grid* grid, const int x, const int y) {
             if (arroundTile->isMine) {
                 t->mineNumberAround++;
             }
-
         }
     }
 }
 
-bool CheckTileState(Tile* tile) {
+/// <summary>
+/// Check if the tile is a mine
+/// </summary>
+/// <param name="tile"></param>
+/// <returns>If the tile is a mine</returns>
+bool TileIsAMine(Tile* tile) {
 
     if (tile == NULL) exit(1);
     if (tile->isShowed) return false;
@@ -148,6 +78,13 @@ bool CheckTileState(Tile* tile) {
 
 }
 
+/// <summary>
+/// Discover tile and tile arround reccursively
+/// </summary>
+/// <param name="grid"></param>
+/// <param name="baseTile"></param>
+/// <param name="x"></param>
+/// <param name="y"></param>
 void DiscoverTile(Grid* grid, Tile* baseTile, const int x, const int y) {
 
     baseTile->isShowed = true;
@@ -167,6 +104,12 @@ void DiscoverTile(Grid* grid, Tile* baseTile, const int x, const int y) {
 
 }
 
+/// <summary>
+/// Toggle flag state of the tile
+/// </summary>
+/// <param name="grid"></param>
+/// <param name="x"></param>
+/// <param name="y"></param>
 void PlaceFlag(Grid* grid, int x, int y) {
     Tile* t = GetTile(grid, x, y);
     if (t == NULL) return;
@@ -314,7 +257,7 @@ void InitGrid(Grid* grid, int gridSize, int mineCount) {
     PlaceRandomMine(grid, mineCount);
     for (int y = 0; y < gridSize; y++) {
         for (int x = 0; x < gridSize; x++) {
-            MineArroundTile(grid, x, y);
+            RefreshMineCountAround(grid, x, y);
         }
     }
 
@@ -346,7 +289,7 @@ bool GameLoop(Grid* grid, int mineCount) {
         else {
 
             Tile* tile = GetTile(grid, x, y);
-            if (CheckTileState(tile)) {
+            if (TileIsAMine(tile)) {
                 isOnMine = true;
             }
             else {
@@ -397,10 +340,4 @@ int main(void) {
 
     return 1;
 
-}
-
-void SetConsoleColor(int textcolor, int backgroundcolor)
-{
-    HANDLE H = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(H, backgroundcolor * 16 + textcolor);
 }
