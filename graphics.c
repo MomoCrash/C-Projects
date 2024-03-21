@@ -83,7 +83,7 @@ void UpdateGraphics(const Grid* grid, const SDL_Surface* screenSurface, SDL_Rect
 
 }
 
-void DisplayGame() {
+void CreateWindow() {
 	
     SDL_Window* window = NULL;
     SDL_Renderer* renderer = NULL;
@@ -101,7 +101,7 @@ void DisplayGame() {
     }
     else
     {
-        window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
+        window = SDL_CreateWindow("Demineur", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
         if (window == NULL)
         {
             printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -109,10 +109,62 @@ void DisplayGame() {
         else
         {
             screenSurface = SDL_GetWindowSurface(window);
+            if (screenSurface == NULL) {
+                printf("Window cannot be created");
+                exit(0);
+            }
             renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+            if (renderer == NULL) {
+                printf("Render canno't be created");
+                exit(0);
+            }
 
-            UpdateGraphics(&grid, screenSurface, allRect, renderer);
             SDL_UpdateWindowSurface(window);
+
+            SDL_Event e;
+            bool quit = false;
+
+            while (loop()) {
+
+                while (SDL_PollEvent(&e)) {
+                    if (e.type == SDL_MOUSEBUTTONDOWN)
+                    {
+                        int x;
+                        int y;
+                        SDL_GetGlobalMouseState(&x, &y);
+                        SDL_MouseButtonEvent buttonEvent = e.button;
+                        if (buttonEvent.button == SDL_BUTTON_LEFT)
+                        {
+                            Tile* tile = NULL;
+                            int index = 0;
+                            for (int i = 0; i < gridSize * gridSize; i++) {
+                                SDL_Rect rect = allRect[i];
+                                if (CheckPointInside(&rect, x, y)) {
+                                    tile = &(grid.tiles[i]);
+                                    index = i;
+                                }
+                            }
+                            if (tile == NULL) continue;
+
+                            int tileX = index % gridSize;
+                            int tileY = index / gridSize;
+
+                            DiscoverTile(&grid, tile, tileX, tileY);
+                            UpdateGraphics(&grid, screenSurface, allRect, renderer);
+
+                        }
+                        else {
+                            printf("Right");
+                        }
+                    }
+                    if (e.type == SDL_QUIT) quit = true;
+                }
+
+                UpdateGraphics(&grid, screenSurface, allRect, renderer);
+
+                SDL_Delay(10);
+
+            }
 
             SDL_Event e; 
             bool quit = false; 

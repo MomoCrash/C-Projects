@@ -11,4 +11,4 @@ void WriteText(SDL_Renderer* renderer, const int x, const int y, const char* tex
 
 void UpdateGraphics(const Grid* grid, const SDL_Surface* screenSurface, SDL_Rect* result, SDL_Renderer* renderer);
 
-void DisplayGame();
+void CreateWindow();
