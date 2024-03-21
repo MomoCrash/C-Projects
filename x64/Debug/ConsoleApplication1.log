@@ -1,0 +1,5 @@
+﻿  graphics.c
+C:\Users\egilotin\source\repos\ConsoleApplication1\ConsoleApplication1\graphics.c(56,31): warning C4090: 'fonction' : qualificateurs 'const' différents
+C:\Users\egilotin\source\repos\ConsoleApplication1\ConsoleApplication1\graphics.c(70,64): warning C4090: 'fonction' : qualificateurs 'const' différents
+C:\Users\egilotin\source\repos\ConsoleApplication1\ConsoleApplication1\graphics.c(75,64): warning C4090: 'fonction' : qualificateurs 'const' différents
+  ConsoleApplication1.vcxproj -> C:\Users\egilotin\source\repos\ConsoleApplication1\x64\Debug\ConsoleApplication1.exe
