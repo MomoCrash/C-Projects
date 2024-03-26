@@ -27,6 +27,9 @@
     <ClCompile Include="game.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="exo.c">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -46,5 +49,10 @@
     <ResourceCompile Include="ConsoleApplication1.rc">
       <Filter>Fichiers de ressources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="TypeMachine.ttf">
+      <Filter>Fichiers de ressources</Filter>
+    </Font>
   </ItemGroup>
 </Project>

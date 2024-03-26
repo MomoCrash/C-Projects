@@ -47,6 +47,10 @@ void AskInt(const char* text, int* value, int min, int max) {
 
 }
 
+char IntToChar(const int number) {
+    return (char)(number + '0');
+}
+
 bool AskChar(const char* anwserText, const char* wantedChar, const char* trueChars, const char* falseChars) {
 
     char userChar;

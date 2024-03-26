@@ -19,81 +19,155 @@ SDL_Rect DrawRectCoord(SDL_Surface* surface, int x, int y, int h, int w, Uint32 
 
 bool CheckPointInside(const SDL_Rect* rect, const int x, const int y)
 {
-    if (x > rect->x && x < rect->x+ rect->w && y > rect->y+ rect->h && y < rect->y)
+    if (x>=rect->x && x<=rect->x+rect->w && y<=rect->y+rect->h && y>=rect->y)
         return true;
 
     return false;
 }
 
-void WriteText(SDL_Renderer* renderer, const int x, const int y, const char* text) {
+bool IsUpdatingGraphics = false;
 
-    TTF_Font* Sans = TTF_OpenFont("Sans.ttf", 24);
+void render_char(SDL_Surface* surface, SDL_Renderer* renderer, int x, int y, char text, TTF_Font* font, SDL_Color* color) {
+    SDL_Surface* textSurface;
+    SDL_Texture* texture;
 
-    SDL_Color White = { 255, 255, 255 };
+    textSurface = TTF_RenderText_Solid(font, &text, *color);
+    texture = SDL_CreateTextureFromSurface(renderer, textSurface);
 
-    // as TTF_RenderText_Solid could only be used on
-    // SDL_Surface then you have to create the surface first
-    SDL_Surface* surfaceMessage =
-        TTF_RenderText_Solid(Sans, text, White);
+    int texW = 0;
+    int texH = 0;
+    SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
+    SDL_Rect dstrect = { x, y, texW, texH };
 
-    // now you can convert it into a texture
-    SDL_Texture* Message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
-
-    SDL_Rect Message_rect;
-    Message_rect.x = x; 
-    Message_rect.y = y;
-    Message_rect.w = 100;
-    Message_rect.h = 100;
-
-    SDL_RenderCopy(renderer, Message, NULL, &Message_rect);
-
-    SDL_FreeSurface(surfaceMessage);
-    SDL_DestroyTexture(Message);
+    SDL_BlitSurface(textSurface, NULL, surface, &dstrect);
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(texture);
 }
 
-void UpdateGraphics(const Grid* grid, const SDL_Surface* screenSurface, SDL_Rect* result, SDL_Renderer* renderer) {
+void render_text(SDL_Surface* surface, SDL_Renderer* renderer, int x, int y, const char* text, TTF_Font* font, SDL_Color* color) {
+    SDL_Surface* textSurface;
+    SDL_Texture* texture;
 
-    SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF));
+    textSurface = TTF_RenderText_Solid(font, text, *color);
+    texture = SDL_CreateTextureFromSurface(renderer, textSurface);
+
+    int texW = 0;
+    int texH = 0;
+    SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
+    SDL_Rect dstrect = { x, y, texW, texH };
+
+    SDL_BlitSurface(textSurface, NULL, surface, &dstrect);
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(texture);
+
+}
+
+void InitButton(SDL_Button* button, SDL_Rect* position, const char* text, SDL_Color* color, void (*resetGridFunc)(Grid*)) {
+
+    button->collider = position;
+    button->resetGridFunc = resetGridFunc;
+    button->text = text;
+
+}
+
+void DrawButton(SDL_Surface* surface, SDL_Renderer* renderer, const SDL_Button button, TTF_Font* font) {
+
+
+    SDL_Color white = { 255, 255, 255 };
+    SDL_Color black = { 0, 0, 0 };
+
+    DrawRectCoord(surface, button.collider->x, button.collider->y, button.collider->h, button.collider->w, &white);
+    render_text(surface, renderer, button.collider->x, button.collider->y, button.text, font, &black);
+
+}
+
+void UpdateGraphics(const Grid* grid, const SDL_Surface* screenSurface, SDL_Rect* result, SDL_Button* buttons, SDL_Renderer* renderer, TTF_Font* font, bool exploded) {
+
+    // Clear background
+    SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 128, 139, 150));
+    SDL_Color White = { 255, 255, 255 };
 
     int baseX = 640 / (grid->size / 2);
     int baseY = 480 / (grid->size / 2);
     int index = 0;
 
+    // Render title 
+    render_text(screenSurface, renderer, baseX + 50, 10, "Minesweeper", font, &White);
+
+    // Update rendered grid cases
     for (int y = 0; y < grid->size; y++) {
         for (int x = 0; x < grid->size; x++) {
 
             Tile* tile = GetTile(grid, x, y);
             if (!tile) continue;
 
-            if (tile->isMine) {
-                printf("%d", index);
-                *(result + index) = DrawRectCoord(screenSurface, baseX + x * 30, baseY + y * 30, 25, 25, SDL_MapRGB(screenSurface->format, 255, 0, 0));
-                WriteText(renderer, x, y, "M");
+            if (exploded) {
+                if (tile->isMine) {
+                    *(result + index) = DrawRectCoord(screenSurface, baseX + x * 30, baseY + y * 30, 25, 25, SDL_MapRGB(screenSurface->format, 197, 0, 0));
+                }
+                else {
+                    *(result + index) = DrawRectCoord(screenSurface, baseX + x * 30, baseY + y * 30, 25, 25, SDL_MapRGB(screenSurface->format, 225, 179, 127));
+                    render_char(screenSurface, renderer, baseX + x * 30, baseY + y * 30, IntToChar(tile->mineNumberAround), font, &White);
+                }
             }
             else {
-                printf("%d", index);
-                *(result + index) = DrawRectCoord(screenSurface, baseX + x * 30, baseY + y * 30, 25, 25, SDL_MapRGB(screenSurface->format, 0, 255, 0));
-                WriteText(renderer, x, y, "T");
+                if (tile->isShowed) {
+                    *(result + index) = DrawRectCoord(screenSurface, baseX + x * 30, baseY + y * 30, 25, 25, SDL_MapRGB(screenSurface->format, 225, 179, 127));
+                    render_char(screenSurface, renderer, baseX + x * 30, baseY + y * 30, IntToChar(tile->mineNumberAround), font, &White);
+                }
+                else if (tile->isFlag) {
+                    *(result + index) = DrawRectCoord(screenSurface, baseX + x * 30, baseY + y * 30, 25, 25, SDL_MapRGB(screenSurface->format, 73, 209, 110));
+                } 
+                else {
+                    *(result + index) = DrawRectCoord(screenSurface, baseX + x * 30, baseY + y * 30, 25, 25, SDL_MapRGB(screenSurface->format, 213, 219, 219));
+                }
             }
+
             index++;
         }
     }
+
+    DrawButton(screenSurface, renderer, buttons[0], font);
 
     SDL_RenderPresent(renderer);
 
 }
 
-void CreateWindow() {
+void ResetGrid(Grid* grid) {
+    free(grid->tiles);
+    InitGrid(grid, grid->size, 10);
+    IsUpdatingGraphics = true;
+}
+
+void InitWindow() {
 	
     SDL_Window* window = NULL;
     SDL_Renderer* renderer = NULL;
     SDL_Surface* screenSurface = NULL;
-    //TTF_Init();
+
+    if (TTF_Init() == -1) {
+        printf("TTF_text module can't be loaded");
+        exit(0);
+    }
+
+    TTF_Font* font = TTF_OpenFont("TypeMachine.ttf", 24);
+
+    if (font == NULL) exit(0);
 
     Grid grid;
     int gridSize = 10;
     InitGrid(&grid, gridSize, 10);
     SDL_Rect* allRect = (SDL_Rect*)malloc(sizeof(SDL_Rect) * gridSize * gridSize);
+
+    int BUTTON_NUMBER = 1;
+
+    // Reset button
+    SDL_Button* buttons = (SDL_Button*)malloc(sizeof(SDL_Button) * BUTTON_NUMBER);
+
+    SDL_Rect buttonRect = { 0, 0, 100, 50 };
+    SDL_Color White = { 255, 255, 255 };
+
+    InitButton(&buttons[0], &buttonRect, "Reset", &White, &ResetGrid);
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -108,101 +182,98 @@ void CreateWindow() {
         }
         else
         {
-            screenSurface = SDL_GetWindowSurface(window);
-            if (screenSurface == NULL) {
-                printf("Window cannot be created");
-                exit(0);
-            }
+
             renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
             if (renderer == NULL) {
                 printf("Render canno't be created");
                 exit(0);
             }
 
+            screenSurface = SDL_GetWindowSurface(window);
+            if (screenSurface == NULL) {
+                printf("Window cannot be created");
+                exit(0);
+            }
+            
+            UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false);
+
             SDL_UpdateWindowSurface(window);
 
             SDL_Event e;
             bool quit = false;
-
-            while (loop()) {
+            while (!quit) {
 
                 while (SDL_PollEvent(&e)) {
                     if (e.type == SDL_MOUSEBUTTONDOWN)
                     {
-                        int x;
-                        int y;
-                        SDL_GetGlobalMouseState(&x, &y);
+                        int x = e.motion.x;
+                        int y = e.motion.y;
                         SDL_MouseButtonEvent buttonEvent = e.button;
-                        if (buttonEvent.button == SDL_BUTTON_LEFT)
-                        {
-                            Tile* tile = NULL;
-                            int index = 0;
-                            for (int i = 0; i < gridSize * gridSize; i++) {
-                                SDL_Rect rect = allRect[i];
-                                if (CheckPointInside(&rect, x, y)) {
-                                    tile = &(grid.tiles[i]);
-                                    index = i;
+
+                        Tile* tile = NULL;
+                        int index = 0;
+                        for (int i = 0; i < gridSize * gridSize; i++) {
+                            SDL_Rect rect = allRect[i];
+                            if (CheckPointInside(&rect, x, y)) {
+                                tile = &(grid.tiles[i]);
+                                index = i;
+                            }
+                        }
+                        printf("%d", index);
+                        if (tile == NULL) {
+                            
+                            for (int i = 0; i < BUTTON_NUMBER; i++) {
+                                if (CheckPointInside(buttons[i].collider, x, y)) {
+                                    buttons[i].resetGridFunc(&grid);
                                 }
                             }
-                            if (tile == NULL) continue;
 
-                            int tileX = index % gridSize;
-                            int tileY = index / gridSize;
+                            continue;
+                        }
 
-                            DiscoverTile(&grid, tile, tileX, tileY);
-                            UpdateGraphics(&grid, screenSurface, allRect, renderer);
+                        int tileX = index % gridSize;
+                        int tileY = index / gridSize;
+
+                        if (buttonEvent.button == SDL_BUTTON_LEFT)
+                        {
+
+                            if (tile->isFlag) continue;
+
+                            if (TileIsAMine(tile)) {
+                                UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, true);
+                            }
+                            else {
+                                DiscoverTile(&grid, tile, tileX, tileY);
+                                UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false);
+                            }
+
+                            SDL_UpdateWindowSurface(window);
 
                         }
                         else {
-                            printf("Right");
+
+                            PlaceFlag(&grid, tileX, tileY);
+
+                            UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false);
+
+                            SDL_UpdateWindowSurface(window);
+
                         }
+
                     }
                     if (e.type == SDL_QUIT) quit = true;
                 }
 
-                UpdateGraphics(&grid, screenSurface, allRect, renderer);
-
                 SDL_Delay(10);
 
+                if (IsUpdatingGraphics) {
+                    UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false);
+                    SDL_UpdateWindowSurface(window);
+                    IsUpdatingGraphics = false;
+                }
+
             }
 
-            SDL_Event e; 
-            bool quit = false; 
-            while (quit == false) { 
-                while (SDL_PollEvent(&e)) { 
-                    if (e.type == SDL_MOUSEBUTTONDOWN)
-                    {
-                        int x;
-                        int y;
-                        SDL_GetGlobalMouseState(&x, &y);
-                        SDL_MouseButtonEvent buttonEvent = e.button;
-                        if (buttonEvent.button == SDL_BUTTON_LEFT)
-                        {
-                            Tile* tile = NULL;
-                            int index = 0;
-                            for (int i = 0; i < gridSize * gridSize; i++) {
-                                SDL_Rect rect = allRect[i];
-                                if (CheckPointInside(&rect, x, y)) {
-                                    tile = &(grid.tiles[i]);
-                                    index = i;
-                                }
-                            }
-                            if (tile == NULL) continue;
-
-                            int tileX = index % gridSize;
-                            int tileY = index / gridSize;
-
-                            DiscoverTile(&grid, tile, tileX, tileY);
-                            UpdateGraphics(&grid, screenSurface, allRect, renderer);
-
-                        }
-                        else {
-                            printf("Right");
-                        }
-                    }
-                    if (e.type == SDL_QUIT) quit = true; 
-                } 
-            }
         }
     }
 

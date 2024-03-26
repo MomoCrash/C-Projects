@@ -2,11 +2,15 @@
 #include "graphics.h"
 #include "game.h"
 
+#include <stdio.h>
+
 int main(void) {
 
-    DisplayGame();
+    srand(time(NULL));
 
-    return 1;
+    InitWindow();
+
+    return 0;
 
     srand(time(NULL));
 
