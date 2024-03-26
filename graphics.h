@@ -7,7 +7,7 @@
 typedef struct SDL_Button
 {
 
-    void (*resetGridFunc)(Grid*);
+    void (*func)(Grid*);
     SDL_Rect* collider;
     const char* text;
 

@@ -65,7 +65,7 @@ void render_text(SDL_Surface* surface, SDL_Renderer* renderer, int x, int y, con
 void InitButton(SDL_Button* button, SDL_Rect* position, const char* text, SDL_Color* color, void (*resetGridFunc)(Grid*)) {
 
     button->collider = position;
-    button->resetGridFunc = resetGridFunc;
+    button->func = resetGridFunc;
     button->text = text;
 
 }
@@ -127,7 +127,9 @@ void UpdateGraphics(const Grid* grid, const SDL_Surface* screenSurface, SDL_Rect
         }
     }
 
+
     DrawButton(screenSurface, renderer, buttons[0], font);
+    DrawButton(screenSurface, renderer, buttons[1], font);
 
     SDL_RenderPresent(renderer);
 
@@ -137,6 +139,10 @@ void ResetGrid(Grid* grid) {
     free(grid->tiles);
     InitGrid(grid, grid->size, 10);
     IsUpdatingGraphics = true;
+}
+
+void Quit() {
+    exit(0);
 }
 
 void InitWindow() {
@@ -159,15 +165,17 @@ void InitWindow() {
     InitGrid(&grid, gridSize, 10);
     SDL_Rect* allRect = (SDL_Rect*)malloc(sizeof(SDL_Rect) * gridSize * gridSize);
 
-    int BUTTON_NUMBER = 1;
+    int BUTTON_NUMBER = 2;
 
     // Reset button
     SDL_Button* buttons = (SDL_Button*)malloc(sizeof(SDL_Button) * BUTTON_NUMBER);
 
-    SDL_Rect buttonRect = { 0, 0, 100, 50 };
+    SDL_Rect restartRect = { 120, 400, 200, 50 };
+    SDL_Rect quitRect = { 360, 400, 100, 50 };
     SDL_Color White = { 255, 255, 255 };
 
-    InitButton(&buttons[0], &buttonRect, "Reset", &White, &ResetGrid);
+    InitButton(&buttons[0], &restartRect, "Recommencer", &White, &ResetGrid);
+    InitButton(&buttons[1], &quitRect, "Quitter", &White, &Quit);
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -201,6 +209,7 @@ void InitWindow() {
 
             SDL_Event e;
             bool quit = false;
+            bool lose = false;
             while (!quit) {
 
                 while (SDL_PollEvent(&e)) {
@@ -224,12 +233,14 @@ void InitWindow() {
                             
                             for (int i = 0; i < BUTTON_NUMBER; i++) {
                                 if (CheckPointInside(buttons[i].collider, x, y)) {
-                                    buttons[i].resetGridFunc(&grid);
+                                    buttons[i].func(&grid);
                                 }
                             }
 
                             continue;
                         }
+
+                        if (lose) continue;
 
                         int tileX = index % gridSize;
                         int tileY = index / gridSize;
