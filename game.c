@@ -70,6 +70,7 @@ bool TileIsAMine(Tile* tile) {
 void DiscoverTile(Grid* grid, Tile* baseTile, const int x, const int y) {
 
     baseTile->isShowed = true;
+    grid->remainTiles--;
     if (baseTile->mineNumberAround > 0) return;
 
     for (int yAR = y - 1; yAR <= y + 1; yAR++) {
@@ -166,12 +167,27 @@ void PlaceRandomMine(Grid* grid, int mineCount) {
         randomIntegers[i] = i;
     }
 
+    int count = 0;
     for (int i = 0; i < mineCount; i++) {
+
         if (!randomIntegers) exit(1);
-        int randIndex = rand() % (gridTileCount - i);
-        (grid->tiles + randomIntegers[randIndex])->isMine = true;
-        RemoveIndexFromArray(randomIntegers, randIndex);
-        randomIntegers = (int*)realloc(randomIntegers, gridTileCount * sizeof(int) - i * sizeof(int));
+        int randIndex = rand() % (gridTileCount - count);
+
+        Tile* tile = (grid->tiles + randomIntegers[randIndex]);
+        if (tile->isShowed) {
+            tile->isMine = false;
+            RemoveIndexFromArray(randomIntegers, randIndex);
+            randomIntegers = (int*)realloc(randomIntegers, gridTileCount * sizeof(int) - count * sizeof(int));
+            i--;
+        }
+        else {
+            tile->isMine = true;
+            RemoveIndexFromArray(randomIntegers, randIndex);
+            randomIntegers = (int*)realloc(randomIntegers, gridTileCount * sizeof(int) - count * sizeof(int));
+        }
+
+        count++;
+
     }
 
     free(randomIntegers);
@@ -236,12 +252,6 @@ void InitGrid(Grid* grid, int gridSize, int mineCount) {
             InitTile(GetTile(grid, x, y));
         }
     }
-    PlaceRandomMine(grid, mineCount);
-    for (int y = 0; y < gridSize; y++) {
-        for (int x = 0; x < gridSize; x++) {
-            RefreshMineCountAround(grid, x, y);
-        }
-    }
 
     PrintGrid(grid);
 }
@@ -250,6 +260,7 @@ bool GameLoop(Grid* grid, int mineCount) {
 
     bool isDefeat = false;
     bool isWin = false;
+    bool isFirstPlay = true;
     do {
 
         bool isFlag = AskChar("\n Mettre un drapeau ou decouvrir ?", "fFdD", "fF", "dD");
@@ -265,17 +276,47 @@ bool GameLoop(Grid* grid, int mineCount) {
         y--;
 
         if (isFlag) {
-
             PlaceFlag(grid, x, y);
         }
         else {
 
-            Tile* tile = GetTile(grid, x, y);
-            if (TileIsAMine(tile)) {
-                isOnMine = true;
+            if (isFirstPlay) {
+
+                Tile* tile = GetTile(grid, x, y);
+
+                for (int yAR = y - 1; yAR <= y + 1; yAR++) {
+                    for (int xAR = x - 1; xAR <= x + 1; xAR++) {
+                        Tile* arroundTile = GetTile(grid, xAR, yAR);
+                        if (arroundTile == NULL) continue;
+                        arroundTile->isShowed = true;
+                    }
+                }
+
+                PlaceRandomMine(grid, mineCount);
+
+                for (int arroundY = 0; arroundY < grid->size; arroundY++) {
+                    for (int arroundX = 0; arroundX < grid->size; arroundX++) {
+                        RefreshMineCountAround(grid, arroundX, arroundY);
+                    }
+                }
+
+
+                for (int yAR = y - 1; yAR <= y + 1; yAR++) {
+                    for (int xAR = x - 1; xAR <= x + 1; xAR++) {
+                        DiscoverTile(grid, tile, xAR, yAR);
+                    }
+                }
+
+                isFirstPlay = false;
             }
             else {
-                DiscoverTile(grid, tile, x, y);
+                Tile* tile = GetTile(grid, x, y);
+                if (TileIsAMine(tile)) {
+                    isOnMine = true;
+                }
+                else {
+                    DiscoverTile(grid, tile, x, y);
+                }
             }
         }
 

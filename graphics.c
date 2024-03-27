@@ -4,6 +4,14 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
+
+bool IsUpdatingGraphics = false;
+bool IsFirstPlay = true;
+bool IsLoosed = false;
+bool IsWinned = false;
+
 SDL_Rect DrawRectCoord(SDL_Surface* surface, int x, int y, int h, int w, Uint32 color) {
 
     SDL_Rect rect;
@@ -24,8 +32,6 @@ bool CheckPointInside(const SDL_Rect* rect, const int x, const int y)
 
     return false;
 }
-
-bool IsUpdatingGraphics = false;
 
 void render_char(SDL_Surface* surface, SDL_Renderer* renderer, int x, int y, char text, TTF_Font* font, SDL_Color* color) {
     SDL_Surface* textSurface;
@@ -81,14 +87,23 @@ void DrawButton(SDL_Surface* surface, SDL_Renderer* renderer, const SDL_Button b
 
 }
 
-void UpdateGraphics(const Grid* grid, const SDL_Surface* screenSurface, SDL_Rect* result, SDL_Button* buttons, SDL_Renderer* renderer, TTF_Font* font, bool exploded) {
+void UpdateGraphics(
+    const Grid* grid, 
+    const SDL_Surface* screenSurface, 
+    SDL_Rect* result, SDL_Button* buttons, 
+    SDL_Renderer* renderer, 
+    TTF_Font* font, 
+    bool exploded,
+    bool win
+) {
 
     // Clear background
     SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 128, 139, 150));
     SDL_Color White = { 255, 255, 255 };
+    SDL_Color black = { 0, 0, 0 };
 
-    int baseX = 640 / (grid->size / 2);
-    int baseY = 480 / (grid->size / 2);
+    int baseX = (SCREEN_WIDTH + 30) / (grid->size / 2);
+    int baseY = (SCREEN_HEIGHT + 30) / (grid->size / 2);
     int index = 0;
 
     // Render title 
@@ -126,6 +141,14 @@ void UpdateGraphics(const Grid* grid, const SDL_Surface* screenSurface, SDL_Rect
             index++;
         }
     }
+     
+    if (exploded) {
+        render_text(screenSurface, renderer, baseX, baseY+200, "PERDU !! Clique sur rejouer !", font, &black);
+    }
+
+    if (win) {
+        render_text(screenSurface, renderer, baseX, baseY + 200, "Tu as gagne bravo !! Clique sur rejouer !", font, &black);
+    }
 
 
     DrawButton(screenSurface, renderer, buttons[0], font);
@@ -139,6 +162,9 @@ void ResetGrid(Grid* grid) {
     free(grid->tiles);
     InitGrid(grid, grid->size, 10);
     IsUpdatingGraphics = true;
+    IsLoosed = false;
+    IsWinned = false;
+    IsFirstPlay = true;
 }
 
 void Quit() {
@@ -162,7 +188,8 @@ void InitWindow() {
 
     Grid grid;
     int gridSize = 10;
-    InitGrid(&grid, gridSize, 10);
+    int mineNumber = 2;
+    InitGrid(&grid, gridSize, mineNumber);
     SDL_Rect* allRect = (SDL_Rect*)malloc(sizeof(SDL_Rect) * gridSize * gridSize);
 
     int BUTTON_NUMBER = 2;
@@ -170,11 +197,11 @@ void InitWindow() {
     // Reset button
     SDL_Button* buttons = (SDL_Button*)malloc(sizeof(SDL_Button) * BUTTON_NUMBER);
 
-    SDL_Rect restartRect = { 120, 400, 200, 50 };
-    SDL_Rect quitRect = { 360, 400, 100, 50 };
+    SDL_Rect restartRect = { 120, 400, 100, 50 };
+    SDL_Rect quitRect = { 350, 400, 100, 50 };
     SDL_Color White = { 255, 255, 255 };
 
-    InitButton(&buttons[0], &restartRect, "Recommencer", &White, &ResetGrid);
+    InitButton(&buttons[0], &restartRect, "Rejouer", &White, &ResetGrid);
     InitButton(&buttons[1], &quitRect, "Quitter", &White, &Quit);
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -183,7 +210,7 @@ void InitWindow() {
     }
     else
     {
-        window = SDL_CreateWindow("Demineur", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
+        window = SDL_CreateWindow("Demineur", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
         if (window == NULL)
         {
             printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -203,13 +230,12 @@ void InitWindow() {
                 exit(0);
             }
             
-            UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false);
+            UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false, false);
 
             SDL_UpdateWindowSurface(window);
 
             SDL_Event e;
             bool quit = false;
-            bool lose = false;
             while (!quit) {
 
                 while (SDL_PollEvent(&e)) {
@@ -240,7 +266,7 @@ void InitWindow() {
                             continue;
                         }
 
-                        if (lose) continue;
+                        if (IsLoosed || IsWinned) continue;
 
                         int tileX = index % gridSize;
                         int tileY = index / gridSize;
@@ -250,12 +276,51 @@ void InitWindow() {
 
                             if (tile->isFlag) continue;
 
-                            if (TileIsAMine(tile)) {
-                                UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, true);
+                            if (IsFirstPlay) {
+
+                                Tile* tile = GetTile(&grid, tileX, tileY);
+
+                                for (int yAR = tileY - 1; yAR <= tileY + 1; yAR++) {
+                                    for (int xAR = tileX - 1; xAR <= tileX + 1; xAR++) {
+                                        Tile* arroundTile = GetTile(&grid, xAR, yAR);
+                                        if (arroundTile == NULL) continue;
+                                        arroundTile->isShowed = true;
+                                    }
+                                }
+
+                                PlaceRandomMine(&grid, mineNumber);
+
+                                for (int arroundY = 0; arroundY < grid.size; arroundY++) {
+                                    for (int arroundX = 0; arroundX < grid.size; arroundX++) {
+                                        RefreshMineCountAround(&grid, arroundX, arroundY);
+                                    }
+                                }
+
+
+                                for (int yAR = tileY - 1; yAR <= tileY + 1; yAR++) {
+                                    for (int xAR = tileX - 1; xAR <= tileX + 1; xAR++) {
+                                        Tile* arroundTile = GetTile(&grid, xAR, yAR);
+                                        if (arroundTile == NULL) continue;
+                                        DiscoverTile(&grid, arroundTile, xAR, yAR);
+                                    }
+                                }
+
+                                UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false, false);
+
+                                IsFirstPlay = false;
+
+                            } else if (TileIsAMine(tile)) {
+                                UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, true, false);
+                                IsLoosed = true;
                             }
                             else {
                                 DiscoverTile(&grid, tile, tileX, tileY);
-                                UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false);
+
+                                int GridSquared = grid.size * grid.size;
+                                int GridGoodFlag = CountGoodFlag(&grid);
+                                IsWinned = (0 == grid.remainTiles - GridGoodFlag - (mineNumber - GridGoodFlag));
+
+                                UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false, IsWinned);
                             }
 
                             SDL_UpdateWindowSurface(window);
@@ -265,7 +330,10 @@ void InitWindow() {
 
                             PlaceFlag(&grid, tileX, tileY);
 
-                            UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false);
+                            int GridGoodFlag = CountGoodFlag(&grid);
+                            IsWinned = (0 == grid.remainTiles - GridGoodFlag - (mineNumber - GridGoodFlag));
+
+                            UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false, false);
 
                             SDL_UpdateWindowSurface(window);
 
@@ -278,7 +346,7 @@ void InitWindow() {
                 SDL_Delay(10);
 
                 if (IsUpdatingGraphics) {
-                    UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false);
+                    UpdateGraphics(&grid, screenSurface, allRect, buttons, renderer, font, false, false);
                     SDL_UpdateWindowSurface(window);
                     IsUpdatingGraphics = false;
                 }

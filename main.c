@@ -1,15 +1,17 @@
 #include "tools.h"
 #include "graphics.h"
 #include "game.h"
+#include "exo.h"
 
 #include <stdio.h>
 
 int main(void) {
 
+    Start();
+    return 0;
+
     srand(time(NULL));
-
     InitWindow();
-
     return 0;
 
     srand(time(NULL));

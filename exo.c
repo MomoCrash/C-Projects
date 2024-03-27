@@ -1,14 +1,6 @@
 #include "tools.h"
 #include <stdio.h>
-
-typedef struct IntArray
-{
-    int* pContent;
-
-    int iSize;
-    int iCapacity;
-
-} IntArray;
+#include "exo.h"
 
 void InitIntArray(IntArray* pIntArray) {
 
@@ -78,11 +70,6 @@ void Destroy(IntArray* pIntArray) {
 }
 
 /// STRING
-
-typedef struct String {
-    char* pContent;
-    int iLenght;
-} String;
 
 String CreateString(const char* str) {
 
@@ -204,7 +191,20 @@ void DestroyString(String* string) {
     free(string->pContent);
 }
 
-int Start() {
+// List
+
+void Init(List* pList) {
+
+    pList->iCount = 1;
+    pList->pFirst = (Node*)malloc(sizeof(Node) * 1);
+
+}
+
+void AddFirst(List* pList, int ivalue) {
+
+}
+
+void Start() {
 
     IntArray array;
     InitIntArray(&array);
